@@ -21,12 +21,14 @@
 (defclass system-with-readtable (system readtable-function-mixin)
   ())
 
+#+asdf-system-connections
 (defclass system-connection-with-readtable (system-connection readtable-function-mixin)
   ())
 
 (defmethod asdf::module-default-component-class ((class system-with-readtable))
   'cl-source-file-with-readtable)
 
+#+asdf-system-connections
 (defmethod asdf::module-default-component-class ((class system-connection-with-readtable))
   'cl-source-file-with-readtable)
 
@@ -109,6 +111,7 @@
 (defclass hu.dwim.documentation-system (system-with-readtable+package)
   ())
 
+#+asdf-system-connections
 (defclass hu.dwim.system-connection (system-connection-with-readtable)
   ())
 
@@ -124,6 +127,7 @@
 (defmethod asdf::module-default-component-class ((class hu.dwim.system))
   'hu.dwim.source-file)
 
+#+asdf-system-connections
 (defmethod asdf::module-default-component-class ((class hu.dwim.system-connection))
   'hu.dwim.source-file)
 

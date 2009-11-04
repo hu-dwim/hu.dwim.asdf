@@ -8,7 +8,6 @@
 
 (defpackage :hu.dwim.asdf
   (:use :asdf
-        :asdf-install
         :common-lisp)
 
   (:export #:hu.dwim.system
