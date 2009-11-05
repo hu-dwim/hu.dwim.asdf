@@ -43,6 +43,7 @@
                setup-readtable-function-name))
       ;; we need to ignore-errors because the setup-readtable-function is only defined
       ;; after some of the early files are already loaded.
+      ;; FIXME this will intern into random packages because SETUP-READTABLE-FUNCTION-NAME has a default value...
       (let ((setup-readtable-function (ignore-errors
                                         (fdefinition (read-from-string setup-readtable-function-name)))))
         (when setup-readtable-function
