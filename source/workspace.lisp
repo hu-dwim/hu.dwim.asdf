@@ -31,8 +31,9 @@
                  (pushnew dir-candidate *central-registry* :test 'equal))))))
     (setf *central-registry* (copy-list *original-central-registry*))
     ;; on the dev environments we have a symlink called "global" to /usr/share/common-lisp/source/
-    (push-all (merge-pathnames "global/" *workspace-directory*) :process-outside-links nil)
-    ;; (push-all "/usr/share/common-lisp/source/")
+    ;; (push-all (merge-pathnames "global/" *workspace-directory*) :process-outside-links nil)
+    (push-all "/usr/share/common-lisp/source/")
+    (push-all "/usr/local/share/common-lisp/source/")
     ;; (push-all (merge-pathnames ".sbcl/site/" (user-homedir-pathname)))
     (push-all *workspace-directory*)
     ;; iolib has its *.asd's inside its src directory
