@@ -101,7 +101,12 @@
    (documentation-system-name
     :initform nil
     :initarg :test-system-name
-    :accessor system-documentation-system-name)))
+    :accessor system-documentation-system-name))
+  (:default-initargs
+   :author '("Tamás Borbély <tomi.borbely@gmail.com>"
+             "Attila Lendvai <attila.lendvai@gmail.com>"
+             "Levente Mészáros <levente.meszaros@gmail.com>")
+   :licence "BSD / Public domain"))
 
 (defclass hu.dwim.test-system (system-with-readtable+package)
   ((test-result
