@@ -26,7 +26,7 @@
 
 (defvar *muffle-optimization-warnings* t)
 
-(defclass hu.dwim.source-file (cl-source-file)
+(defclass hu.dwim.cl-source-file (cl-source-file)
   ())
 
 (defclass hu.dwim.system (system-with-package)
@@ -63,12 +63,12 @@
           (concatenate 'string (string-downcase (component-name system)) ".documentation"))))
 
 (defmethod asdf::module-default-component-class ((class hu.dwim.test-system))
-  'hu.dwim.source-file)
+  'hu.dwim.cl-source-file)
 
 (defmethod asdf::module-default-component-class ((class hu.dwim.system))
-  'hu.dwim.source-file)
+  'hu.dwim.cl-source-file)
 
-(defmethod perform :around ((op operation) (component hu.dwim.source-file))
+(defmethod perform :around ((op operation) (component hu.dwim.cl-source-file))
   (let ((*features* *features*)
         (*readtable* (copy-readtable *readtable*))
         (*package* *package*)
