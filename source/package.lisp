@@ -28,5 +28,6 @@
            #:production-only*
            #:optimize-declaration
            #:with-muffled-boring-compiler-warnings
+           #:with-ignored-boring-compiler-warnings
            #:*workspace-directory*
            #:reread-asdf-registry))

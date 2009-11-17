@@ -152,6 +152,10 @@
 (defmacro with-muffled-boring-compiler-warnings (&body body)
   `(call-with-muffled-boring-compiler-warnings (lambda () ,@body)))
 
+(defmacro with-ignored-boring-compiler-warnings (&body body)
+  `(locally (declare #+sbcl(sb-ext:muffle-conditions style-warning sb-ext:compiler-note))
+     ,@body))
+
 (defgeneric call-in-system-environment (operation system function)
   (:method ((op operation) (system system) function)
     (if *muffle-optimization-warnings*
