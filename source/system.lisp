@@ -11,15 +11,41 @@
 
 (defclass system-with-package (system)
   ((package-name
-    :initform nil
     :initarg :package-name
     :accessor system-package-name)))
 
 (defmethod reinitialize-instance :after ((system system-with-package) &rest args &key &allow-other-keys)
   (declare (ignore args))
-  (unless (system-package-name system)
+  (unless (slot-boundp system 'package-name)
     (setf (system-package-name system)
           (string-upcase (component-name system)))))
+
+(defclass system-with-target ()
+  ((target-system-name
+    :initarg :target-system-name
+    :accessor system-target-system-name)))
+
+(defmethod reinitialize-instance :after ((system system-with-target) &rest args &key &allow-other-keys)
+  (declare (ignore args))
+  (let* ((system-name (string-downcase (component-name system)))
+         (last-dot-position (position #\. system-name :from-end t)))
+    (unless (slot-boundp system 'target-system-name)
+      (setf (system-target-system-name system)
+            (subseq system-name 0 last-dot-position)))
+    (let ((target-system (find-system (system-target-system-name system) nil)))
+      (when target-system
+        (unless (slot-boundp system 'asdf::author)
+          (setf (system-author system)
+                (system-author target-system)))
+        (unless (slot-boundp system 'asdf::licence)
+          (setf (system-licence system)
+                (system-licence target-system)))
+        (unless (slot-boundp system 'asdf::description)
+          (setf (system-description system)
+                (concatenate 'string
+                             (string-capitalize (subseq system-name (1+ last-dot-position)))
+                             " for "
+                             (system-target-system-name system))))))))
 
 ;;;;;;
 ;;; DWIM system
@@ -31,11 +57,9 @@
 
 (defclass hu.dwim.system (system-with-package)
   ((test-system-name
-    :initform nil
     :initarg :test-system-name
     :accessor system-test-system-name)
    (documentation-system-name
-    :initform nil
     :initarg :test-system-name
     :accessor system-documentation-system-name))
   (:default-initargs
@@ -44,21 +68,20 @@
              "Levente Mészáros <levente.meszaros@gmail.com>")
    :licence "BSD / Public domain"))
 
-(defclass hu.dwim.test-system (system-with-package)
+(defclass hu.dwim.test-system (system-with-target system-with-package)
   ((test-result
-    :initform nil
     :initarg :test-result
     :accessor system-test-result)))
 
-(defclass hu.dwim.documentation-system (system-with-package)
+(defclass hu.dwim.documentation-system (system-with-target system-with-package)
   ())
 
 (defmethod reinitialize-instance :after ((system hu.dwim.system) &rest args &key &allow-other-keys)
   (declare (ignore args))
-  (unless (system-test-system-name system)
+  (unless (slot-boundp system 'test-system-name)
     (setf (system-test-system-name system)
           (concatenate 'string (string-downcase (component-name system)) ".test")))
-  (unless (system-documentation-system-name system)
+  (unless (slot-boundp system 'documentation-system-name)
     (setf (system-documentation-system-name system)
           (concatenate 'string (string-downcase (component-name system)) ".documentation"))))
 
@@ -103,11 +126,12 @@
 (defmethod perform ((op test-op) (system hu.dwim.system))
   (let ((test-system (find-system (system-test-system-name system) nil)))
     (if test-system
-        (progn
+        (let ((package-name (system-package-name test-system)))
           (load-system test-system)
-          (setf (system-test-result test-system)
-                (eval (funcall (find-symbol "FUNCALL-TEST-WITH-FEEDBACK-MESSAGE" "HU.DWIM.STEFIL")
-                               (find-symbol "TEST" (system-package-name test-system))))))
+          (when package-name
+            (setf (system-test-result test-system)
+                  (eval (funcall (find-symbol "FUNCALL-TEST-WITH-FEEDBACK-MESSAGE" "HU.DWIM.STEFIL")
+                                 (find-symbol "TEST" package-name))))))
         (warn "There is no test system for ~A, no tests were run" system))))
 
 ;;;;;;
