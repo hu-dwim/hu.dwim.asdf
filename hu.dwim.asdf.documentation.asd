@@ -10,11 +10,6 @@
 
 (defsystem :hu.dwim.asdf.documentation
   :class hu.dwim.documentation-system
-  :author ("Levente Mészáros <levente.meszaros@gmail.com>"
-           "Attila Lendvai <attila.lendvai@gmail.com>"
-           "Tamás Borbély <tomi.borbely@gmail.com>")
-  :licence "BSD / Public domain"
-  :description "Documentation for hu.dwim.asdf"
   :depends-on (:hu.dwim.asdf
                :hu.dwim.wui)
   :components ((:module "documentation"
