@@ -179,7 +179,7 @@
 (defun system-pathname (name)
   (component-pathname (find-system name)))
 
-(defun system-depends-on-systems (name)
+(defun collect-system-dependencies (name)
   (let ((systems nil))
     (labels ((recurse (system)
                (dolist (specification (component-depends-on 'load-op system))
