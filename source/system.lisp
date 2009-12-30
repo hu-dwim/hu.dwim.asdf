@@ -73,7 +73,10 @@
 (defclass hu.dwim.test-system (system-with-target system-with-package)
   ((test-result
     :initarg :test-result
-    :accessor system-test-result)))
+    :accessor system-test-result)
+   (test-output
+    :initarg :test-output
+    :accessor system-test-output)))
 
 (defclass hu.dwim.documentation-system (system-with-target system-with-package)
   ())
@@ -131,9 +134,15 @@
         (let ((package-name (system-package-name test-system)))
           (load-system test-system)
           (when package-name
-            (setf (system-test-result test-system)
-                  (eval (funcall (find-symbol "FUNCALL-TEST-WITH-FEEDBACK-MESSAGE" "HU.DWIM.STEFIL")
-                                 (find-symbol "TEST" package-name))))))
+            (let* ((output (make-string-output-stream))
+                   (*standard-output* (make-broadcast-stream *standard-output* output))
+                   (*error-output* (make-broadcast-stream *error-output* output))
+                   (*debug-io* (make-broadcast-stream *debug-io* output)))
+              (setf (system-test-result test-system)
+                    (eval (funcall (find-symbol "FUNCALL-TEST-WITH-FEEDBACK-MESSAGE" "HU.DWIM.STEFIL")
+                                   (find-symbol "TEST" package-name))))
+              (setf (system-test-output test-system)
+                    (get-output-stream-string output)))))
         (warn "There is no test system for ~A, no tests were run" system))))
 
 ;;;;;;

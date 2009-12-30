@@ -19,6 +19,7 @@
            #:system-test-system-name
            #:system-documentation-system-name
            #:system-test-result
+           #:system-test-output
            #:develop-op
            #:develop-system
            #:*load-as-production?*
