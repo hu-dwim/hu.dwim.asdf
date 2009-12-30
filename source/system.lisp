@@ -210,7 +210,7 @@
       (recurse (find-system name)))
     systems))
 
-(change-class (find-system :hu.dwim.asdf) 'hu.dwim.system)
+(reinitialize-instance (change-class (find-system :hu.dwim.asdf) 'hu.dwim.system))
 
 (in-package :sb-impl)
 
