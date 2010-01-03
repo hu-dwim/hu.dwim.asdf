@@ -57,29 +57,50 @@
 (defclass hu.dwim.cl-source-file (cl-source-file)
   ())
 
-(defclass hu.dwim.system (system-with-package)
+(defclass system-with-output ()
+  ((compile-output
+    :initform nil
+    :initarg :compile-output
+    :accessor system-compile-output)
+   (load-output
+    :initform nil
+    :initarg :load-output
+    :accessor system-load-output)))
+
+(defclass hu.dwim.system (system-with-output system-with-package)
   ((test-system-name
     :initarg :test-system-name
     :accessor system-test-system-name)
    (documentation-system-name
-    :initarg :test-system-name
+    :initarg :documentation-system-name
     :accessor system-documentation-system-name))
   (:default-initargs
+   :licence "BSD / Public domain"
    :author '("Tamás Borbély <tomi.borbely@gmail.com>"
              "Attila Lendvai <attila.lendvai@gmail.com>"
-             "Levente Mészáros <levente.meszaros@gmail.com>")
-   :licence "BSD / Public domain"))
+             "Levente Mészáros <levente.meszaros@gmail.com>")))
 
-(defclass hu.dwim.test-system (system-with-target system-with-package)
+(defclass hu.dwim.test-system (system-with-output system-with-target system-with-package)
   ((test-result
+    :initform nil
     :initarg :test-result
     :accessor system-test-result)
    (test-output
+    :initform nil
     :initarg :test-output
     :accessor system-test-output)))
 
-(defclass hu.dwim.documentation-system (system-with-target system-with-package)
+(defclass hu.dwim.documentation-system (system-with-output system-with-target system-with-package)
   ())
+
+(defmacro with-capturing-output (place &body forms)
+  (let ((stream (gensym "STREAM")))
+    `(let* ((,stream (make-string-output-stream))
+            (*standard-output* (make-broadcast-stream *standard-output* ,stream))
+            (*error-output* (make-broadcast-stream *error-output* ,stream))
+            (*debug-io* (make-broadcast-stream *debug-io* ,stream)))
+       ,@forms
+       (setf ,place (concatenate 'string ,place (get-output-stream-string ,stream))))))
 
 (defmethod reinitialize-instance :after ((system hu.dwim.system) &rest args &key &allow-other-keys)
   (declare (ignore args))
@@ -109,6 +130,14 @@
       (pushnew :debug *features*))
     (call-in-system-environment op (component-system component) #'call-next-method)))
 
+(defmethod perform :around ((op compile-op) (component hu.dwim.cl-source-file))
+  (with-capturing-output (system-compile-output (component-system component))
+    (call-next-method)))
+
+(defmethod perform :around ((op load-op) (component hu.dwim.cl-source-file))
+  (with-capturing-output (system-load-output (component-system component))
+    (call-next-method)))
+
 (defun call-with-muffled-boring-compiler-warnings (thunk)
   (handler-bind (#+sbcl(sb-ext:compiler-note #'muffle-warning)
                  ;; NOTE: muffle these warnings to reduce compilation noise, tests already cover interesting cases
@@ -134,15 +163,10 @@
         (let ((package-name (system-package-name test-system)))
           (load-system test-system)
           (when package-name
-            (let* ((output (make-string-output-stream))
-                   (*standard-output* (make-broadcast-stream *standard-output* output))
-                   (*error-output* (make-broadcast-stream *error-output* output))
-                   (*debug-io* (make-broadcast-stream *debug-io* output)))
+            (with-capturing-output (system-test-output test-system)
               (setf (system-test-result test-system)
                     (eval (funcall (find-symbol "FUNCALL-TEST-WITH-FEEDBACK-MESSAGE" "HU.DWIM.STEFIL")
-                                   (find-symbol "TEST" package-name))))
-              (setf (system-test-output test-system)
-                    (get-output-stream-string output)))))
+                                   (find-symbol "TEST" package-name)))))))
         (warn "There is no test system for ~A, no tests were run" system))))
 
 ;;;;;;

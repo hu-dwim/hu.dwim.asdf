@@ -18,6 +18,8 @@
            #:system-package-name
            #:system-test-system-name
            #:system-documentation-system-name
+           #:system-compile-output
+           #:system-load-output
            #:system-test-result
            #:system-test-output
            #:develop-op
