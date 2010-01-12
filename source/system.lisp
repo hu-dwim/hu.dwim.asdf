@@ -97,8 +97,7 @@
   (let ((stream (gensym "STREAM")))
     `(let* ((,stream (make-string-output-stream))
             (*standard-output* (make-broadcast-stream *standard-output* ,stream))
-            (*error-output* (make-broadcast-stream *error-output* ,stream))
-            (*debug-io* (make-broadcast-stream *debug-io* ,stream)))
+            (*error-output* (make-broadcast-stream *error-output* ,stream)))
        ,@forms
        (setf ,place (concatenate 'string ,place (get-output-stream-string ,stream))))))
 
