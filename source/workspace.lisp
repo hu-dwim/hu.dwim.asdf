@@ -10,10 +10,10 @@
 
 (defparameter *original-central-registry* (copy-list *central-registry*))
 
-(defun %initialize-asdf-registry/push-all (systems-dir &key (process-outside-links t))
+(defun %register-directories-into-asdf-registry (systems-dir &key (process-outside-links t) (insert-at :head))
   (setf systems-dir (ignore-errors (truename systems-dir)))
   (unless systems-dir
-    (return-from %initialize-asdf-registry/push-all))
+    (return-from %register-directories-into-asdf-registry))
   (dolist (dir-candidate (directory (concatenate 'string (namestring systems-dir) "*/")))
     ;; skip dirs starting with a _ and .
     (let ((first-char (elt (car (last (pathname-directory dir-candidate))) 0)))
@@ -27,14 +27,19 @@
                            finally (return t)))
                  (directory (merge-pathnames "*.asd" dir-candidate)))
         (format *debug-io* "; Pushing in *central-registry* ~A~%" dir-candidate)
-        (pushnew dir-candidate *central-registry* :test 'equal)))))
+        (unless (find dir-candidate *central-registry* :test 'equal)
+          (ecase insert-at
+            (:head (push dir-candidate *central-registry*))
+            (:tail (append *central-registry* (list dir-candidate)))))))))
 
-(defmacro initialize-asdf-registry (&rest fallback-path-list)
-  `(progn
-     (setf *central-registry* (copy-list *original-central-registry*))
-     ,@(mapcar (lambda (path)
-                 `(%initialize-asdf-registry/push-all ,path))
-               fallback-path-list)
-     (%initialize-asdf-registry/push-all *workspace-directory*)
-     ;; iolib has its *.asd's inside its src directory
-     (%initialize-asdf-registry/push-all (merge-pathnames "iolib/" *workspace-directory*) :process-outside-links nil)))
+(defun initialize-asdf-registry (&rest fallback-path-list)
+  (setf *central-registry* (copy-list *original-central-registry*))
+  (dolist (path fallback-path-list)
+    (%register-directories-into-asdf-registry path))
+  (%register-directories-into-asdf-registry *workspace-directory*)
+  ;; iolib has its *.asd's inside its src directory
+  (%register-directories-into-asdf-registry (merge-pathnames "iolib/" *workspace-directory*) :process-outside-links nil))
+
+(defun extend-asdf-registry (&rest path-list)
+  (dolist (path path-list)
+    (%register-directories-into-asdf-registry path :insert-at :tail)))

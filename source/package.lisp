@@ -34,6 +34,7 @@
            #:with-ignored-boring-compiler-warnings
            #:*workspace-directory*
            #:initialize-asdf-registry
+           #:extend-asdf-registry
            #:find-system
            #:load-system
            #:test-system))
