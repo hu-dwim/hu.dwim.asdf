@@ -33,7 +33,7 @@
            #:with-muffled-boring-compiler-warnings
            #:with-ignored-boring-compiler-warnings
            #:*workspace-directory*
-           #:reread-asdf-registry
+           #:initialize-asdf-registry
            #:find-system
            #:load-system
            #:test-system))
