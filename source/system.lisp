@@ -190,11 +190,13 @@
     (if test-system
         (load-system test-system)
         (load-system system))
-    (load-system :hu.dwim.def+swank)
     (load-system :hu.dwim.debug)
     (use-package :hu.dwim.debug :hu.dwim.common)
     (do-external-symbols (symbol :hu.dwim.debug)
       (export symbol :hu.dwim.common))
+    ;; TODO: KLUDGE: these two systems should be automagically loaded by a system connection like thingie
+    (load-system :hu.dwim.def+swank)
+    (load-system :hu.dwim.util.error-handling+swank)
     (pushnew :debug *features*)
     (declaim (optimize (debug 3)))
     (let ((package (find-package (system-package-name (or test-system system)))))
