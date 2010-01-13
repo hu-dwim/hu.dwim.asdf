@@ -6,6 +6,9 @@
 
 (in-package :hu.dwim.asdf)
 
+;; kept here in a comment to make it trivial to build with safety 2
+;; (sb-ext:restrict-compiler-policy 'safety 2)
+
 ;;;;;;
 ;;; Production support
 
