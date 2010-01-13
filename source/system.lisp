@@ -190,6 +190,7 @@
     (if test-system
         (load-system test-system)
         (load-system system))
+    (load-system :hu.dwim.def+swank)
     (load-system :hu.dwim.debug)
     (use-package :hu.dwim.debug :hu.dwim.common)
     (do-external-symbols (symbol :hu.dwim.debug)
