@@ -26,11 +26,12 @@
                              (return nil))
                            finally (return t)))
                  (directory (merge-pathnames "*.asd" dir-candidate)))
-        (format *debug-io* "; Pushing in *central-registry* ~A~%" dir-candidate)
         (unless (find dir-candidate *central-registry* :test 'equal)
           (ecase insert-at
-            (:head (push dir-candidate *central-registry*))
-            (:tail (append *central-registry* (list dir-candidate)))))))))
+            (:head (push dir-candidate *central-registry*)
+                   (format *debug-io* "; Pushing into *central-registry* ~A~%" dir-candidate))
+            (:tail (setf *central-registry* (append *central-registry* (list dir-candidate)))
+                   (format *debug-io* "; Appending to *central-registry* ~A~%" dir-candidate))))))))
 
 (defun initialize-asdf-registry (&rest fallback-path-list)
   (setf *central-registry* (copy-list *original-central-registry*))
