@@ -159,14 +159,21 @@
 (defmethod perform ((op test-op) (system hu.dwim.system))
   (let ((test-system (find-system (system-test-system-name system) nil)))
     (if test-system
-        (let ((package-name (system-package-name test-system)))
+        (progn
           (load-system test-system)
-          (when package-name
-            (with-capturing-output (system-test-output test-system)
-              (setf (system-test-result test-system)
-                    (eval (funcall (find-symbol "FUNCALL-TEST-WITH-FEEDBACK-MESSAGE" "HU.DWIM.STEFIL")
-                                   (find-symbol "TEST" package-name)))))))
+          (run-test-suite test-system))
         (warn "There is no test system for ~A, no tests were run" system))))
+
+(defgeneric run-test-suite (system)
+  (:method :around ((system hu.dwim.test-system))
+    (let ((package-name (system-package-name system)))
+      (with-capturing-output (system-test-output system)
+        (if package-name
+            (setf (system-test-result system) (call-next-method))
+            (warn "There is no test package for ~A" system)))))
+  (:method ((system hu.dwim.test-system))
+    (let ((package-name (system-package-name system)))
+      (eval (read-from-string (format nil "(hu.dwim.stefil::funcall-test-with-feedback-message '~A::test)" package-name))))))
 
 ;;;;;;
 ;;; Develop

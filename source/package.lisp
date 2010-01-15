@@ -37,4 +37,5 @@
            #:extend-asdf-registry
            #:find-system
            #:load-system
-           #:test-system))
+           #:test-system
+           #:run-test-suite))
