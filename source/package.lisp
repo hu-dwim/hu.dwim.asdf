@@ -35,6 +35,7 @@
            #:*workspace-directory*
            #:initialize-asdf-registry
            #:extend-asdf-registry
+           #:collect-system-dependencies
            #:find-system
            #:load-system
            #:test-system
