@@ -245,10 +245,8 @@
 (reinitialize-instance (change-class (find-system :hu.dwim.asdf) 'hu.dwim.system))
 
 #+sbcl
-(progn
-  (in-package :sb-impl)
-  ;; KLUDGE: TODO: this is an ugly hack to work around the bug https://bugs.launchpad.net/sbcl/+bug/501075
-  (sb-ext::without-package-locks
-    (defun line-length (&optional (stream *standard-output*))
-      (declare (ignore stream))
-      160)))
+;; KLUDGE: TODO: this is an ugly hack to work around the bug https://bugs.launchpad.net/sbcl/+bug/501075
+(sb-ext::without-package-locks
+  (defun sb-impl::line-length (&optional (stream *standard-output*))
+    (declare (ignore stream))
+    160))
