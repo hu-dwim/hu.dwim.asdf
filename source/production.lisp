@@ -6,8 +6,10 @@
 
 (in-package :hu.dwim.asdf)
 
-;; kept here in a comment to make it trivial to build with safety 2
-;; (sb-ext:restrict-compiler-policy 'safety 2)
+#+sbcl
+(progn
+  ;; (sb-ext:restrict-compiler-policy 'safety 2)
+  (sb-ext:restrict-compiler-policy 'sb-c::save-fp-and-pc-around-alien-call 3))
 
 ;;;;;;
 ;;; Production support
