@@ -7,7 +7,8 @@
 (defsystem :hu.dwim.asdf
   :description "Various ASDF extensions such as attached test and documentation system, explicit development support, etc."
   :components ((:module "source"
-                :components ((:file "package")
-                             (:file "production" :depends-on ("workspace"))
+                :components ((:file "duplicates" :depends-on ("package"))
+                             (:file "package")
+                             (:file "production" :depends-on ("workspace" "duplicates"))
                              (:file "system" :depends-on ("production"))
                              (:file "workspace" :depends-on ("package"))))))
