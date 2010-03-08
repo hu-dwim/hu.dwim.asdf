@@ -9,7 +9,6 @@
 (defpackage :hu.dwim.asdf
   (:use :asdf
         :common-lisp)
-
   (:export #:hu.dwim.system
            #:hu.dwim.test-system
            #:hu.dwim.documentation-system
