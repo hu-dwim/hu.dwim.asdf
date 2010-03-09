@@ -11,10 +11,12 @@
 (defparameter *original-central-registry* (copy-list *central-registry*))
 
 (defun %register-directories-into-asdf-registry (systems-dir &key (process-outside-links t) (insert-at :head))
+  (format *debug-io* "; Extending *central-registry* recursively with ~S~%" systems-dir)
   (setf systems-dir (ignore-errors (truename systems-dir)))
   (unless systems-dir
     (return-from %register-directories-into-asdf-registry))
-  (dolist (dir-candidate (directory (concatenate 'string (namestring systems-dir) "*/")))
+  (dolist (dir-candidate (directory (concatenate 'string (namestring systems-dir) "*/")
+                                    #+ccl :directories #+ccl t))
     ;; skip dirs starting with a _ and .
     (let ((first-char (elt (car (last (pathname-directory dir-candidate))) 0)))
       (when (and (not (member first-char (list #\_ #\.)))
