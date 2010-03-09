@@ -81,7 +81,11 @@
              "Levente Mészáros <levente.meszaros@gmail.com>")))
 
 (defclass hu.dwim.test-system (system-with-output system-with-target system-with-package)
-  ((test-result
+  ((test-name
+    :initform nil
+    :initarg :test-name
+    :accessor system-test-name)
+   (test-result
     :initform nil
     :initarg :test-result
     :accessor system-test-result)
@@ -174,7 +178,7 @@
     (if (find-package :hu.dwim.stefil)
         (let ((package-name (system-package-name system)))
           (if package-name
-              (let ((test-name (find-symbol "TEST" package-name)))
+              (let ((test-name (find-symbol (or (system-test-name system) "TEST") package-name)))
                 (funcall (find-symbol "FUNCALL-TEST-WITH-FEEDBACK-MESSAGE" :hu.dwim.stefil) test-name))
               (warn "There is no test package for ~A, no tests were run." system)))
         (call-next-method))))
