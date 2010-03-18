@@ -209,9 +209,8 @@
     (use-package :hu.dwim.debug :hu.dwim.common)
     (do-external-symbols (symbol :hu.dwim.debug)
       (export symbol :hu.dwim.common))
-    ;; TODO: KLUDGE: these two systems should be automagically loaded by a system connection like thingie
-    (load-system :hu.dwim.def+swank)
-    (load-system :hu.dwim.util.error-handling+swank)
+    (find-all-swank-integration-systems)
+    (load-swank-integration-systems)
     (pushnew :debug *features*)
     (declaim (optimize (debug 3)))
     (let ((package (find-package (system-package-name (or test-system system)))))
@@ -234,21 +233,54 @@
 (defun system-pathname (name)
   (component-pathname (find-system name)))
 
+(defun system-loaded-p (system-name)
+  (let ((system (find-system system-name)))
+    (when system
+      (gethash 'load-op (asdf::component-operation-times system)))))
+
+(defun find-all-swank-integration-systems ()
+  (dolist (directory *central-registry*)
+    (let ((directory (eval directory)))
+      (when directory
+        (dolist (file (directory (merge-pathnames directory (make-pathname :name :wild :type "asd"))))
+          (let ((name (pathname-name file)))
+            (when (and (search "hu.dwim" name)
+                       (search "+swank" name))
+              (find-system name))))))))
+
+(defun load-swank-integration-systems ()
+  (maphash (lambda (name system-specification)
+             (let ((system (cdr system-specification)))
+               (when (and (search "+swank" name)
+                          (not (system-loaded-p name)))
+                 (block nil
+                   (map-system-dependencies system
+                                            (lambda (system-dependency)
+                                              (unless (system-loaded-p system-dependency)
+                                                (return nil))))
+                   (load-system system)))))
+           asdf::*defined-systems*))
+
+(defun map-system-dependencies (system function)
+  (dolist (specification (component-depends-on 'load-op system))
+    (when (eq 'load-op (first specification))
+      (dolist (name-specification (cdr specification))
+        (let ((name (string-downcase (if (consp name-specification)
+                                         (second name-specification)
+                                         name-specification))))
+          (let ((system (find-system name)))
+            (funcall function system)))))))
+
 (defun collect-system-dependencies (name)
-  (let ((systems nil))
+  (let ((system-dependencies nil))
     (labels ((recurse (system)
-               (dolist (specification (component-depends-on 'load-op system))
-                 (when (eq 'load-op (first specification))
-                   (dolist (name-specification (cdr specification))
-                     (let ((name (string-downcase (if (consp name-specification)
-                                                      (second name-specification)
-                                                      name-specification))))
-                       (let ((system (find-system name)))
-                         (unless (member system systems)
-                           (push system systems)
-                           (recurse system)))))))))
+               (map-system-dependencies system
+                                        (lambda (system-dependency)
+                                          (unless (member system-dependency system-dependencies)
+                                            (push system-dependency system-dependencies)
+                                            (recurse system-dependency))))))
       (recurse (find-system name)))
-    systems))
+    system-dependencies))
 
 (reinitialize-instance (change-class (find-system :hu.dwim.asdf) 'hu.dwim.system))
 
