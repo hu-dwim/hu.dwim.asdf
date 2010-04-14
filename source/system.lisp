@@ -198,25 +198,34 @@
   nil)
 
 (defmethod perform ((operation develop-op) (system system))
-  (load-system system))
+  (load-system system)
+  (let ((package (find-package (string-upcase (component-name system)))))
+    (when package
+      (setf *development-package* package))))
+
+(defmethod perform :before ((operation develop-op) (system system))
+  (load-system :swank)
+  (set (read-from-string "swank:*globally-redirect-io*") t))
+
+(defmethod perform :after ((operation develop-op) (system system))
+  (load-system :hu.dwim.debug)
+  (use-package :hu.dwim.debug :hu.dwim.common)
+  (do-external-symbols (symbol :hu.dwim.debug)
+    (export symbol :hu.dwim.common))
+  (find-all-swank-integration-systems)
+  (load-swank-integration-systems)
+  (declaim (optimize (debug 3)))
+  (pushnew :debug *features*)
+  (warn "Pushed :debug in *features* and issued (declaim (optimize (debug 3))) to help later C-c C-c'ing"))
 
 (defmethod perform ((operation develop-op) (system hu.dwim.system))
   (let ((test-system (find-system (system-test-system-name system) nil)))
     (if test-system
         (load-system test-system)
         (load-system system))
-    (load-system :hu.dwim.debug)
-    (use-package :hu.dwim.debug :hu.dwim.common)
-    (do-external-symbols (symbol :hu.dwim.debug)
-      (export symbol :hu.dwim.common))
-    (find-all-swank-integration-systems)
-    (load-swank-integration-systems)
-    (pushnew :debug *features*)
-    (declaim (optimize (debug 3)))
     (let ((package (find-package (system-package-name (or test-system system)))))
       (when package
-        (setf *development-package* package)))
-    (warn "Pushed :debug in *features* and (declaim (optimize (debug 3))) was issued to help later C-c C-c'ing")))
+        (setf *development-package* package)))))
 
 (defun develop-system (system &rest args &key force (verbose t) version)
   "Shorthand for `(operate 'asdf:develop-op system)`. See [operate][] for details."
@@ -225,7 +234,8 @@
     (multiple-value-prog1
         (apply #'operate 'develop-op system args)
       (when *development-package*
-        (setf *package* *development-package*)))))
+        (setf *package* *development-package*)
+        (warn "Changed *package* to ~A" *package*)))))
 
 ;;;;;;
 ;;; Util

@@ -9,6 +9,7 @@
 #+sbcl
 (progn
   ;; (sb-ext:restrict-compiler-policy 'safety 2)
+  (pushnew :iolib-debug *features*)
   #+#.(hu.dwim.asdf::if-symbol-exists "SB-C" "SAVE-FP-AND-PC-AROUND-ALIEN-CALL")
   (sb-ext:restrict-compiler-policy 'sb-c::save-fp-and-pc-around-alien-call 3))
 
