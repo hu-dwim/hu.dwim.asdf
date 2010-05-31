@@ -6,7 +6,12 @@
 
 (in-package :hu.dwim.asdf)
 
-(defvar *workspace-directory* (truename (system-relative-pathname :hu.dwim.asdf "..")))
+(defvar *workspace-directory*
+  (truename (or #+sbcl(sb-ext:posix-getenv "DWIM_WORKSPACE")
+                (let ((dir (system-relative-pathname :hu.dwim.asdf "..")))
+                  (warn "Initialized ~S using the path of the ASDF system called :hu.dwim.asdf to ~A (beware of possibly symlinking it somewhere else)"
+                        '*workspace-directory* dir)
+                  dir))))
 
 (defparameter *original-central-registry* (copy-list *central-registry*))
 
