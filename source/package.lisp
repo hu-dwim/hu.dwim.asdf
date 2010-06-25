@@ -32,8 +32,7 @@
            #:with-muffled-boring-compiler-warnings
            #:with-ignored-boring-compiler-warnings
            #:*workspace-directory*
-           #:initialize-asdf-registry
-           #:extend-asdf-registry
+           #:initialize-asdf-source-registry
            #:collect-system-dependencies
            #:find-system
            #:load-system

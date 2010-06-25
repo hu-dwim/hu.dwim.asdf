@@ -13,41 +13,47 @@
                         '*workspace-directory* dir)
                   dir))))
 
-(defparameter *original-central-registry* (copy-list *central-registry*))
+(defun initialize-asdf-source-registry (directories &key (excluded-directories '()) (inherit-configuration? nil) (insert-at :tail))
+  (check-type inherit-configuration? boolean)
+  (unless (consp directories)
+    (setf directories (list directories)))
+  (let ((entries `(:source-registry
+                   (:also-exclude ,@excluded-directories))))
+    (labels ((collect-directories (root-directory)
+               (mapcar (lambda (el)
+                         (list :directory el))
+                       (collect-directories-for-source-registry root-directory)))
+             (extend-with (path)
+               (ecase insert-at
+                 (:head (setf entries (append (collect-directories path) entries)))
+                 (:tail (setf entries (append entries (collect-directories path)))))))
+      (map nil #'extend-with directories)
+      ;; iolib has its *.asd's inside its src directory
+      (extend-with (merge-pathnames "iolib/" *workspace-directory*))
+      (initialize-source-registry (append entries (list (if inherit-configuration?
+                                                            :inherit-configuration
+                                                            :ignore-inherited-configuration)))))))
 
-(defun %register-directories-into-asdf-registry (systems-dir &key (process-outside-links t) (insert-at :head))
-  (format *debug-io* "; Extending *central-registry* recursively with ~S~%" systems-dir)
-  (setf systems-dir (ignore-errors (truename systems-dir)))
-  (unless systems-dir
-    (return-from %register-directories-into-asdf-registry))
-  (dolist (dir-candidate (directory (concatenate 'string (namestring systems-dir) "*/")
-                                    #+ccl :directories #+ccl t))
-    ;; skip dirs starting with a _ and .
-    (let ((first-char (elt (car (last (pathname-directory dir-candidate))) 0)))
-      (when (and (not (member first-char (list #\_ #\.)))
-                 (or process-outside-links
-                     (loop for a in (pathname-directory dir-candidate)
-                           for b in (pathname-directory systems-dir)
-                           while b do
-                           (unless (equal a b)
-                             (return nil))
-                           finally (return t)))
-                 (directory (merge-pathnames "*.asd" dir-candidate)))
-        (unless (find dir-candidate *central-registry* :test 'equal)
-          (ecase insert-at
-            (:head (push dir-candidate *central-registry*)
-                   (format *debug-io* "; Pushing into *central-registry* ~A~%" dir-candidate))
-            (:tail (setf *central-registry* (append *central-registry* (list dir-candidate)))
-                   (format *debug-io* "; Appending to *central-registry* ~A~%" dir-candidate))))))))
-
-(defun initialize-asdf-registry (&rest fallback-path-list)
-  (setf *central-registry* (copy-list *original-central-registry*))
-  (dolist (path fallback-path-list)
-    (%register-directories-into-asdf-registry path))
-  (%register-directories-into-asdf-registry *workspace-directory*)
-  ;; iolib has its *.asd's inside its src directory
-  (%register-directories-into-asdf-registry (merge-pathnames "iolib/" *workspace-directory*) :process-outside-links nil))
-
-(defun extend-asdf-registry (&rest path-list)
-  (dolist (path path-list)
-    (%register-directories-into-asdf-registry path :insert-at :tail)))
+(defun collect-directories-for-source-registry (root-directory &key (process-outside-links t))
+  (format *debug-io* "; Collecting directories for the source registry under ~S~%" root-directory)
+  (setf root-directory (ignore-errors (truename root-directory)))
+  (unless root-directory
+    (return-from collect-directories-for-source-registry))
+  (let ((result ()))
+    (dolist (candidate-directory (directory (concatenate 'string (namestring root-directory) "*/")
+                                            #+ccl :directories #+ccl t))
+      ;; skip dirs starting with a _ and .
+      (let ((first-char (elt (car (last (pathname-directory candidate-directory))) 0)))
+        (when (and (not (member first-char (list #\_ #\.)))
+                   (or process-outside-links
+                       (loop for a in (pathname-directory candidate-directory)
+                             for b in (pathname-directory root-directory)
+                             while b do
+                             (unless (equal a b)
+                               (return nil))
+                             finally (return t)))
+                   (directory (merge-pathnames "*.asd" candidate-directory)))
+          (unless (find candidate-directory result :test 'equal)
+            (push candidate-directory result)
+            (format *debug-io* "; Collecting ~A~%" candidate-directory)))))
+    result))
