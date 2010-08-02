@@ -243,6 +243,9 @@
 (defun system-pathname (name)
   (component-pathname (find-system name)))
 
+(defun system-directory (name)
+  (make-pathname :directory (pathname-directory (system-pathname name))))
+
 (defun system-loaded-p (system-name)
   (let ((system (find-system system-name)))
     (when system

@@ -6,7 +6,7 @@
 
 (in-package :hu.dwim.asdf.documentation)
 
-(def project :hu.dwim.asdf :path (system-pathname :hu.dwim.asdf))
+(def project :hu.dwim.asdf)
 
 (def book user-guide (:title "User guide")
   (chapter (:title "Introduction")

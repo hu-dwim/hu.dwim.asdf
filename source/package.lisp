@@ -13,6 +13,7 @@
            #:hu.dwim.test-system
            #:hu.dwim.documentation-system
            #:system-pathname
+           #:system-directory
            #:system-relative-pathname
            #:system-package-name
            #:system-test-system-name
