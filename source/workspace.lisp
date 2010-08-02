@@ -17,8 +17,7 @@
   (check-type inherit-configuration? boolean)
   (unless (consp directories)
     (setf directories (list directories)))
-  (let ((entries `(:source-registry
-                   (:also-exclude ,@excluded-directories))))
+  (let ((entries `((:also-exclude ,@excluded-directories))))
     (labels ((collect-directories (root-directory)
                (mapcar (lambda (el)
                          (list :directory el))
@@ -30,9 +29,11 @@
       (map nil #'extend-with directories)
       ;; iolib has its *.asd's inside its src directory
       (extend-with (merge-pathnames "iolib/" *workspace-directory*))
-      (initialize-source-registry (append entries (list (if inherit-configuration?
-                                                            :inherit-configuration
-                                                            :ignore-inherited-configuration)))))))
+      (initialize-source-registry (append '(:source-registry)
+                                          entries
+                                          (list (if inherit-configuration?
+                                                    :inherit-configuration
+                                                    :ignore-inherited-configuration)))))))
 
 (defun collect-directories-for-source-registry (root-directory &key (process-outside-links t))
   (format *debug-io* "; Collecting directories for the source registry under ~S~%" root-directory)
