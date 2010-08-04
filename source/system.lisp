@@ -179,7 +179,16 @@
         (let ((package-name (system-package-name system)))
           (if package-name
               (let ((test-name (find-symbol (or (system-test-name system) "TEST") package-name)))
-                (funcall (find-symbol "FUNCALL-TEST-WITH-FEEDBACK-MESSAGE" :hu.dwim.stefil) test-name))
+                ;; KLUDGE: ASDF grabs the Big Compiler Lock by using WITH-COMPILATION-UNIT
+                ;; KLUDGE: this causes deadlock in (test-system :hu.dwim.rdbms.postgresql)
+                (unwind-protect
+                     (progn
+                       #+sbcl
+                       (sb-thread::release-mutex sb-c::**world-lock**)
+                       (funcall (find-symbol "FUNCALL-TEST-WITH-FEEDBACK-MESSAGE" :hu.dwim.stefil) test-name))
+                  (progn
+                    #+sbcl
+                    (sb-thread::get-mutex sb-c::**world-lock**))))
               (warn "There is no test package for ~A, no tests were run." system)))
         (call-next-method))))
 
