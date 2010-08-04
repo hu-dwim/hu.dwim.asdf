@@ -82,7 +82,7 @@
 
 (defclass hu.dwim.test-system (system-with-output system-with-target system-with-package)
   ((test-name
-    :initform nil
+    :initform "TEST"
     :initarg :test-name
     :accessor system-test-name)
    (test-result
@@ -178,7 +178,7 @@
     (if (find-package :hu.dwim.stefil)
         (let ((package-name (system-package-name system)))
           (if package-name
-              (let ((test-name (find-symbol (or (system-test-name system) "TEST") package-name)))
+              (let ((test-name (find-symbol (system-test-name system) package-name)))
                 ;; KLUDGE: ASDF grabs the Big Compiler Lock by using WITH-COMPILATION-UNIT
                 ;; KLUDGE: this causes deadlock in (test-system :hu.dwim.rdbms.postgresql)
                 (unwind-protect

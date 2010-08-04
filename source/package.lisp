@@ -16,6 +16,7 @@
            #:system-directory
            #:system-relative-pathname
            #:system-package-name
+           #:system-test-name
            #:system-test-system-name
            #:system-documentation-system-name
            #:system-compile-output
