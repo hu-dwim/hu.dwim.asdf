@@ -274,35 +274,59 @@
   (maphash (lambda (name system-specification)
              (let ((system (cdr system-specification)))
                (when (and (search "+swank" name)
-                          (not (system-loaded-p name)))
-                 (block nil
-                   (map-system-dependencies system
-                                            (lambda (system-dependency)
-                                              (unless (system-loaded-p system-dependency)
-                                                (return nil))))
-                   (load-system system)))))
+                          (not (system-loaded-p name))
+                          (every 'system-loaded-p (collect-system-dependencies system)))
+                 (load-system system))))
            asdf::*defined-systems*))
 
-(defun map-system-dependencies (system function)
-  (dolist (specification (component-depends-on 'load-op system))
-    (when (eq 'load-op (first specification))
-      (dolist (name-specification (cdr specification))
-        (let ((name (string-downcase (if (consp name-specification)
-                                         (second name-specification)
-                                         name-specification))))
-          (let ((system (find-system name)))
-            (funcall function system)))))))
+(defun find-system/for-dependency-specification (spec)
+  (cond
+    ((and (consp spec)
+          (eq (first spec) :version))
+     (find-system (second spec)))
+    ((and spec
+          (symbolp spec))
+     (find-system spec))
+    (t
+     (error "~S: Don't know how to deal with dependency specification ~S" 'find-system/for-dependency-specification spec))))
 
-(defun collect-system-dependencies (name)
-  (let ((system-dependencies nil))
-    (labels ((recurse (system)
-               (map-system-dependencies system
-                                        (lambda (system-dependency)
-                                          (unless (member system-dependency system-dependencies)
-                                            (push system-dependency system-dependencies)
-                                            (recurse system-dependency))))))
-      (recurse (find-system name)))
-    system-dependencies))
+(defun %iterate-system-dependencies-1 (function system)
+  (check-type system system)
+  (dolist (spec (rest (find 'load-op (component-depends-on 'load-op system) :key 'first)))
+    (funcall function (find-system/for-dependency-specification spec))))
+
+(defun iterate-system-dependencies (function system &key (transitive nil))
+  (unless (typep system 'system)
+    (setf system (find-system system)))
+  (if transitive
+      (let ((dependencies '()))
+        (labels ((recurse (system)
+                   (%iterate-system-dependencies-1 (lambda (dependency)
+                                                     (unless (member dependency dependencies)
+                                                       (push dependency dependencies)
+                                                       (recurse dependency)))
+                                                   system)))
+          (recurse system)
+          (map nil function dependencies)))
+      (%iterate-system-dependencies-1 function system))
+  (values))
+
+(defun map-system-dependencies (function system &key (transitive nil))
+  (let ((result '()))
+    (iterate-system-dependencies (lambda (dependency)
+                                   (push (funcall function dependency) result))
+                                 system :transitive transitive)
+    result))
+
+(defun collect-system-dependencies (system &key (transitive nil))
+  (map-system-dependencies 'identity system :transitive transitive))
+
+(defmacro do-system-dependencies ((variable-name system-name &key (transitive nil)) &body body)
+  (let ((body-fn (gensym "DSD-BODY")))
+    `(block nil
+       (flet ((,body-fn (,variable-name)
+                ,@body))
+         (iterate-system-dependencies #',body-fn ,system-name :transitive ,transitive)))))
 
 (reinitialize-instance (change-class (find-system :hu.dwim.asdf) 'hu.dwim.system))
 

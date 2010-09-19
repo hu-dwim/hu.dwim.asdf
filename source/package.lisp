@@ -35,6 +35,9 @@
            #:with-ignored-boring-compiler-warnings
            #:*workspace-directory*
            #:initialize-asdf-source-registry
+           #:iterate-system-dependencies
+           #:do-system-dependencies
+           #:map-system-dependencies
            #:collect-system-dependencies
            #:find-system
            #:load-system
