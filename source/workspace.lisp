@@ -51,7 +51,7 @@
                                             #+ccl :directories #+ccl t))
       (let ((directory-name (car (last (pathname-directory candidate-directory)))))
         ;; skip dirs starting with a _ and .
-        (when (and (not (member (elt directory-name 0) (list #\_ #\.)))
+        (when (and (not (member (elt directory-name 0) '(#\_ #\.)))
                    ;; ignore anything with "slime" in its name. the right version was already put in the asdf source registry before us even loaded...
                    (not (search "slime" directory-name :test 'equalp))
                    (or process-outside-links
