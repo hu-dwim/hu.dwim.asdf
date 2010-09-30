@@ -13,8 +13,12 @@
                         '*workspace-directory* dir)
                   dir))))
 
-(defun initialize-asdf-source-registry (directories &key (excluded-directories '()) (inherit-configuration? nil) (insert-at :tail))
+(defvar *default-slime-directory* "slime/")
+
+(defun initialize-asdf-source-registry (directories &key (excluded-directories '()) (inherit-configuration? nil) (insert-at :tail) additional-entries
+                                        (slime-directory *default-slime-directory*))
   (check-type inherit-configuration? boolean)
+  (check-type slime-directory (or string pathname))
   (unless (consp directories)
     (setf directories (list directories)))
   (let ((entries `((:also-exclude ,@excluded-directories))))
@@ -31,6 +35,8 @@
       (extend-with (merge-pathnames "iolib/" *workspace-directory*))
       (initialize-source-registry (append '(:source-registry)
                                           entries
+                                          additional-entries
+                                          `((:directory ,slime-directory))
                                           (list (if inherit-configuration?
                                                     :inherit-configuration
                                                     :ignore-inherited-configuration)))))))
@@ -43,9 +49,11 @@
   (let ((result ()))
     (dolist (candidate-directory (directory (concatenate 'string (namestring root-directory) "*/")
                                             #+ccl :directories #+ccl t))
-      ;; skip dirs starting with a _ and .
-      (let ((first-char (elt (car (last (pathname-directory candidate-directory))) 0)))
-        (when (and (not (member first-char (list #\_ #\.)))
+      (let ((directory-name (car (last (pathname-directory candidate-directory)))))
+        ;; skip dirs starting with a _ and .
+        (when (and (not (member (elt directory-name 0) (list #\_ #\.)))
+                   ;; ignore anything with "slime" in its name. the right version was already put in the asdf source registry before us even loaded...
+                   (not (search "slime" directory-name :test 'equalp))
                    (or process-outside-links
                        (loop for a in (pathname-directory candidate-directory)
                              for b in (pathname-directory root-directory)
