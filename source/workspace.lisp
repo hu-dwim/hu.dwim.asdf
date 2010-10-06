@@ -13,12 +13,12 @@
                         '*workspace-directory* dir)
                   dir))))
 
-(defvar *default-slime-directory* "slime/")
+(defvar *swank-directory* nil)
 
 (defun initialize-asdf-source-registry (directories &key (excluded-directories '()) (inherit-configuration? nil) (insert-at :tail) additional-entries
-                                        (slime-directory *default-slime-directory*))
+                                        (swank-directory *swank-directory*))
   (check-type inherit-configuration? boolean)
-  (check-type slime-directory (or string pathname))
+  (check-type swank-directory (or null string pathname))
   (unless (consp directories)
     (setf directories (list directories)))
   (let ((entries `((:also-exclude ,@excluded-directories))))
@@ -36,7 +36,8 @@
       (initialize-source-registry (append '(:source-registry)
                                           entries
                                           additional-entries
-                                          `((:directory ,slime-directory))
+                                          (when swank-directory
+                                            `((:directory ,swank-directory)))
                                           (list (if inherit-configuration?
                                                     :inherit-configuration
                                                     :ignore-inherited-configuration)))))))
