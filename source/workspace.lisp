@@ -33,6 +33,7 @@
       (map nil #'extend-with directories)
       ;; iolib has its *.asd's inside its src directory
       (extend-with (merge-pathnames "iolib/" *workspace-directory*))
+      (extend-with (merge-pathnames "global/iolib/" *workspace-directory*))
       (initialize-source-registry (append '(:source-registry)
                                           entries
                                           additional-entries
