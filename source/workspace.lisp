@@ -49,22 +49,32 @@
   (unless root-directory
     (return-from collect-directories-for-source-registry))
   (let ((result ()))
-    (dolist (candidate-directory (directory (concatenate 'string (namestring root-directory) "*/")
-                                            #+ccl :directories #+ccl t))
-      (let ((directory-name (car (last (pathname-directory candidate-directory)))))
-        ;; skip dirs starting with a _ and .
-        (when (and (not (member (elt directory-name 0) '(#\_ #\.)))
-                   ;; ignore anything with "slime" in its name. the right version was already put in the asdf source registry before us even loaded...
-                   (not (search "slime" directory-name :test 'equalp))
-                   (or process-outside-links
-                       (loop for a in (pathname-directory candidate-directory)
-                             for b in (pathname-directory root-directory)
-                             while b do
-                             (unless (equal a b)
-                               (return nil))
-                             finally (return t)))
-                   (directory (merge-pathnames "*.asd" candidate-directory)))
-          (unless (find candidate-directory result :test 'equal)
-            (push candidate-directory result)
-            (format *debug-io* "; Collecting ~A~%" candidate-directory)))))
+    (flet ((collect (directory)
+             (unless (find directory result :test 'equal)
+               (push directory result)
+               (format *debug-io* "; Collecting ~A~%" directory)))
+           (include-directory? (directory-name)
+             (and (not (member (elt directory-name 0) '(#\_ #\.)))
+                  ;; ignore anything with "slime" in its name. the right version was already put in the asdf source registry before us even loaded...
+                  (not (search "slime" directory-name :test 'equalp))))
+           (external-symlink? (directory)
+             (loop for a in (pathname-directory directory)
+                   for b in (pathname-directory root-directory)
+                   while b do
+                   (unless (equal a b)
+                     (return nil))
+                   finally (return t))))
+      (dolist (candidate-directory (directory (concatenate 'string (namestring root-directory)
+                                                           #-allegro "*/"
+                                                           #+allegro "*")
+                                              #+ccl :directories #+ccl t
+                                              #+allegro :directories-are-files #+allegro nil))
+        (when (directory-pathname-p candidate-directory)
+          (let ((directory-name (car (last (pathname-directory candidate-directory)))))
+            ;; skip dirs starting with a _ and .
+            (when (and (include-directory? directory-name)
+                       (or process-outside-links
+                           (not (external-symlink? candidate-directory)))
+                       (directory (merge-pathnames "*.asd" candidate-directory)))
+              (collect candidate-directory))))))
     result))
