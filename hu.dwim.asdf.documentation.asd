@@ -11,7 +11,7 @@
 (defsystem :hu.dwim.asdf.documentation
   :class hu.dwim.documentation-system
   :depends-on (:hu.dwim.asdf
-               :hu.dwim.wui)
+               :hu.dwim.presentation)
   :components ((:module "documentation"
                 :components ((:file "asdf" :depends-on ("package"))
                              (:file "package")))))
