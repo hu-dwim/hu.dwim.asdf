@@ -221,8 +221,7 @@
   (use-package :hu.dwim.debug :hu.dwim.common)
   (do-external-symbols (symbol :hu.dwim.debug)
     (export symbol :hu.dwim.common))
-  (find-all-swank-integration-systems)
-  (load-swank-integration-systems)
+  (find-and-load-swank-integration-systems)
   (declaim (optimize (debug 3)))
   (pushnew :debug *features*)
   (warn "Pushed :debug in *features* and issued (declaim (optimize (debug 3))) to help later C-c C-c'ing"))
@@ -276,6 +275,10 @@
                           (every 'system-loaded-p (collect-system-dependencies system)))
                  (load-system system))))
            asdf::*defined-systems*))
+
+(defun find-and-load-swank-integration-systems ()
+  (find-all-swank-integration-systems)
+  (load-swank-integration-systems))
 
 (defun find-system/for-dependency-specification (spec)
   (cond

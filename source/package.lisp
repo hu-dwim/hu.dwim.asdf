@@ -9,7 +9,8 @@
 (defpackage :hu.dwim.asdf
   (:use :asdf
         :common-lisp)
-  (:export #:hu.dwim.system
+  (:export #:find-and-load-swank-integration-systems
+           #:hu.dwim.system
            #:hu.dwim.test-system
            #:hu.dwim.documentation-system
            #:system-pathname
