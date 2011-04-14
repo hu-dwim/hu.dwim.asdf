@@ -32,8 +32,8 @@
                  (:tail (setf entries (append entries (collect-directories path)))))))
       (map nil #'extend-with directories)
       ;; iolib has its *.asd's inside its src directory
-      (extend-with (merge-pathnames "iolib/" *workspace-directory*))
-      (extend-with (merge-pathnames "global/iolib/" *workspace-directory*))
+      (extend-with (merge-pathnames* (coerce-pathname "iolib/") *workspace-directory*))
+      (extend-with (merge-pathnames* (coerce-pathname "global/iolib/") *workspace-directory*))
       (initialize-source-registry (append '(:source-registry)
                                           entries
                                           additional-entries
@@ -64,17 +64,13 @@
                    (unless (equal a b)
                      (return nil))
                    finally (return t))))
-      (dolist (candidate-directory (directory (concatenate 'string (namestring root-directory)
-                                                           #-allegro "*/"
-                                                           #+allegro "*")
-                                              #+ccl :directories #+ccl t
-                                              #+allegro :directories-are-files #+allegro nil))
+      (dolist (candidate-directory (subdirectories root-directory))
         (when (directory-pathname-p candidate-directory)
           (let ((directory-name (car (last (pathname-directory candidate-directory)))))
             ;; skip dirs starting with a _ and .
             (when (and (include-directory? directory-name)
                        (or process-outside-links
                            (not (external-symlink? candidate-directory)))
-                       (directory (merge-pathnames "*.asd" candidate-directory)))
+                       (directory (merge-pathnames* "*.asd" candidate-directory)))
               (collect candidate-directory))))))
     result))
