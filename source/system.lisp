@@ -213,8 +213,9 @@
       (setf *development-package* package))))
 
 (defmethod perform :before ((operation develop-op) (system system))
-  (load-system :swank)
-  (set (read-from-string "swank:*globally-redirect-io*") t))
+  (with-simple-restart (continue "Give up loading Swank and continue...")
+    (load-system :swank)
+    (set (read-from-string "swank:*globally-redirect-io*") t)))
 
 (defmethod perform :after ((operation develop-op) (system system))
   (load-system :hu.dwim.debug)
