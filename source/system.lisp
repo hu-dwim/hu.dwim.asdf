@@ -260,13 +260,19 @@
     (when system
       (gethash 'load-op (asdf::component-operation-times system)))))
 
+(defun map-asdf-source-registry-directories (visitor)
+  (loop
+    :for asd-file :being :the :hash-value :of asdf::*source-registry*
+    :do (funcall visitor (make-pathname :directory (pathname-directory asd-file)))))
+
 (defun find-all-swank-integration-systems ()
-  (dolist (directory (asdf:ensure-source-registry))
-    (dolist (file (directory (merge-pathnames directory (make-pathname :name :wild :type "asd"))))
-      (let ((name (pathname-name file)))
-        (when (and (search "hu.dwim" name)
-                   (search "+swank" name))
-          (find-system name))))))
+  (map-asdf-source-registry-directories
+   (lambda (directory)
+     (dolist (file (directory (merge-pathnames directory (make-pathname :name :wild :type "asd"))))
+       (let ((name (pathname-name file)))
+         (when (and (search "hu.dwim" name)
+                    (search "+swank" name))
+           (find-system name)))))))
 
 (defun load-swank-integration-systems ()
   (maphash (lambda (name system-specification)

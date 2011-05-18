@@ -37,6 +37,7 @@
            #:*workspace-directory*
            #:initialize-asdf-source-registry
            #:iterate-system-dependencies
+           #:map-asdf-source-registry-directories
            #:do-system-dependencies
            #:map-system-dependencies
            #:collect-system-dependencies
