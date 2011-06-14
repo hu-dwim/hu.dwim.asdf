@@ -34,6 +34,9 @@
       ;; iolib has its *.asd's inside its src directory
       (extend-with (merge-pathnames* (coerce-pathname "iolib/") *workspace-directory*))
       (extend-with (merge-pathnames* (coerce-pathname "global/iolib/") *workspace-directory*))
+      ;; lispbuilder has several subdirectories for each subproject
+      (extend-with (merge-pathnames* (coerce-pathname "lispbuilder/") *workspace-directory*))
+      (extend-with (merge-pathnames* (coerce-pathname "global/lispbuilder-dev/") *workspace-directory*))
       (initialize-source-registry (append '(:source-registry)
                                           entries
                                           additional-entries
