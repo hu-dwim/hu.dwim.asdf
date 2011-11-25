@@ -57,9 +57,7 @@
                (push directory result)
                (format *debug-io* "; Collecting ~A~%" directory)))
            (include-directory? (directory-name)
-             (and (not (member (elt directory-name 0) '(#\_ #\.)))
-                  ;; ignore anything with "slime" in its name. the right version was already put in the asdf source registry before us even loaded...
-                  (not (search "slime" directory-name :test 'equalp))))
+             (not (member (elt directory-name 0) '(#\_ #\.))))
            (external-symlink? (directory)
              (loop for a in (pathname-directory directory)
                    for b in (pathname-directory root-directory)
