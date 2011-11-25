@@ -195,6 +195,7 @@
 ;;;;;;
 ;;; Develop
 
+;; this is only needed to workaround asdf's rigidity (ASDF protects *package* by rebinding it, but we want to set it)
 (defvar *development-package*)
 
 (defclass develop-op (operation)
