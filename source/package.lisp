@@ -9,12 +9,6 @@
 (defpackage :hu.dwim.asdf
   (:use :asdf
         :common-lisp)
-  (:import-from :asdf
-           #:coerce-pathname
-           #:directory-pathname-p
-           #:getenv
-           #:merge-pathnames*
-           #:subdirectories)
   (:export #:find-and-load-swank-integration-systems
            #:hu.dwim.system
            #:hu.dwim.test-system
