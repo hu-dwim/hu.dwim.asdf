@@ -259,7 +259,8 @@
 (defun system-loaded-p (system-name)
   (let ((system (find-system system-name)))
     (when system
-      (gethash 'load-op (asdf::component-operation-times system)))))
+      ;; TODO get rid of asdf/operate: eventually
+      (asdf/operate:component-loaded-p system))))
 
 (defun map-asdf-source-registry-directories (visitor)
   (loop
@@ -281,28 +282,28 @@
                (when (and (search "+swank" name)
                           (not (system-loaded-p name))
                           (every 'system-loaded-p (collect-system-dependencies system)))
-                 (load-system system))))
+                 (with-simple-restart (skip-system "Skip loading swank integration ~A" system)
+                   (load-system system)))))
            asdf::*defined-systems*))
 
 (defun find-and-load-swank-integration-systems ()
   (find-all-swank-integration-systems)
   (load-swank-integration-systems))
 
-(defun find-system/for-dependency-specification (spec)
-  (cond
-    ((and (consp spec)
-          (eq (first spec) :version))
-     (find-system (second spec)))
-    ((and spec
-          (symbolp spec))
-     (find-system spec))
-    (t
-     (error "~S: Don't know how to deal with dependency specification ~S" 'find-system/for-dependency-specification spec))))
-
 (defun %iterate-system-dependencies-1 (function system)
   (check-type system system)
-  (dolist (spec (rest (find 'load-op (component-depends-on 'load-op system) :key 'first)))
-    (funcall function (find-system/for-dependency-specification spec))))
+  (dolist (spec (remove-if-not (lambda (el)
+                                 (etypecase el
+                                   (operation
+                                    (typep el 'load-op))
+                                   (symbol
+                                    (eq el 'load-op))))
+                               (component-depends-on 'load-op system)
+                               :key 'first))
+    (when (> (length spec) 1)
+      (dolist (dependency (rest spec))
+        (when (typep dependency 'system)
+          (funcall function dependency))))))
 
 (defun iterate-system-dependencies (function system &key (transitive nil))
   (unless (typep system 'system)
