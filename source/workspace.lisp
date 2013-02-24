@@ -33,6 +33,7 @@
                  (:head (setf entries (append (collect-directories path) entries)))
                  (:tail (setf entries (append entries (collect-directories path)))))))
       (map nil #'extend-with directories)
+      (extend-with (asdf::merge-pathnames* (asdf::coerce-pathname "xcvb/") *workspace-directory*))
       ;; iolib has its *.asd's inside its src directory
       (extend-with (asdf::merge-pathnames* (asdf::coerce-pathname "iolib/") *workspace-directory*))
       (extend-with (asdf::merge-pathnames* (asdf::coerce-pathname "global/iolib/") *workspace-directory*))
