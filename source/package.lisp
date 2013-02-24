@@ -45,7 +45,3 @@
            #:load-system
            #:test-system
            #:run-test-suite))
-
-(in-package :hu.dwim.asdf)
-
-(assert (find-symbol "LOAD-SYSTEM" :asdf) () "Your asdf is too old, we need a version that exports ASDF:LOAD-SYSTEM")
