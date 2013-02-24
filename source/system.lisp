@@ -239,10 +239,10 @@
 
 (defun develop-system (system &rest args &key force (verbose t) version)
   "Shorthand for `(operate 'asdf:develop-op system)`. See [operate][] for details."
-  (declare (ignore force verbose version))
+  (declare (ignore force version))
   (let ((*development-package* nil))
     (multiple-value-prog1
-        (apply #'operate 'develop-op system args)
+        (apply 'operate 'develop-op system :verbose verbose args)
       (when *development-package*
         (setf *package* *development-package*)
         (warn "Changed *package* to ~A" *package*)))))
