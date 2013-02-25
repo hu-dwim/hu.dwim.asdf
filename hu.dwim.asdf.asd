@@ -6,7 +6,9 @@
 
 (defsystem :hu.dwim.asdf
   :description "Various ASDF extensions such as attached test and documentation system, explicit development support, etc."
-  ;; :depends-on (:asdf) ;  not safe. Be sure to explicitly (upgrade and) load asdf before you use hu.dwim.asdf
+  ;; this dependency on asdf may be a source of headaches if a newer asdf is part of the registry
+  ;; and due to this dependency it gets updated in the middle of a half loaded image... nevertheless, we depend on asdf.
+  :depends-on (:asdf)
   :components ((:module "source"
                 :components ((:file "duplicates" :depends-on ("package"))
                              (:file "package")
