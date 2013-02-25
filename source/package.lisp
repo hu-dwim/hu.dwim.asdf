@@ -32,8 +32,6 @@
            #:production-only
            #:production-only*
            #:optimize-declaration
-           #:with-muffled-boring-compiler-warnings
-           #:with-ignored-boring-compiler-warnings
            #:*workspace-directory*
            #:initialize-asdf-source-registry
            #:iterate-system-dependencies

@@ -141,19 +141,6 @@
   (with-capturing-output (system-load-output (component-system component))
     (call-next-method)))
 
-(defun call-with-muffled-boring-compiler-warnings (thunk)
-  (handler-bind (#+sbcl(sb-ext:compiler-note #'muffle-warning)
-                 ;; NOTE: muffle these warnings to reduce compilation noise, tests already cover interesting cases
-                 #+sbcl(sb-kernel:undefined-alien-style-warning #'muffle-warning))
-    (funcall thunk)))
-
-(defmacro with-muffled-boring-compiler-warnings (&body body)
-  `(call-with-muffled-boring-compiler-warnings (lambda () ,@body)))
-
-(defmacro with-ignored-boring-compiler-warnings (&body body)
-  `(locally (declare #+sbcl(sb-ext:muffle-conditions style-warning sb-ext:compiler-note))
-     ,@body))
-
 (defgeneric call-in-system-environment (operation system function)
   (:method ((op operation) (system system) function)
     (if *muffle-optimization-warnings*
