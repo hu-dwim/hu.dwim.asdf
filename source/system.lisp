@@ -237,8 +237,8 @@
 (defun system-loaded-p (system-name)
   (let ((system (find-system system-name)))
     (when system
-      ;; TODO get rid of asdf/operate: eventually
-      (asdf/operate:component-loaded-p system))))
+      ;; TODO get rid of asdf:: eventually, but it requires asdf 2.30.3
+      (asdf::component-loaded-p system))))
 
 (defun map-asdf-source-registry-directories (visitor)
   (loop
