@@ -8,7 +8,8 @@
   :description "Various ASDF extensions such as attached test and documentation system, explicit development support, etc."
   ;; this dependency on asdf may be a source of headaches if a newer asdf is part of the registry
   ;; and due to this dependency it gets updated in the middle of a half loaded image... nevertheless, we depend on asdf.
-  :depends-on (:asdf)
+  :depends-on (:asdf
+               :uiop)
   :components ((:module "source"
                 :components ((:file "duplicates" :depends-on ("package"))
                              (:file "package")

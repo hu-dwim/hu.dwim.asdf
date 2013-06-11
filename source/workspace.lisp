@@ -33,13 +33,14 @@
                  (:head (setf entries (append (collect-directories path) entries)))
                  (:tail (setf entries (append entries (collect-directories path)))))))
       (map nil #'extend-with directories)
-      (extend-with (asdf::merge-pathnames* (asdf::coerce-pathname "xcvb/") *workspace-directory*))
+      (extend-with (uiop:merge-pathnames* (uiop:coerce-pathname "global/asdf-dev/") *workspace-directory*))
+      (extend-with (uiop:merge-pathnames* (uiop:coerce-pathname "xcvb/") *workspace-directory*))
       ;; iolib has its *.asd's inside its src directory
-      (extend-with (asdf::merge-pathnames* (asdf::coerce-pathname "iolib/") *workspace-directory*))
-      (extend-with (asdf::merge-pathnames* (asdf::coerce-pathname "global/iolib/") *workspace-directory*))
+      (extend-with (uiop:merge-pathnames* (uiop:coerce-pathname "iolib/") *workspace-directory*))
+      (extend-with (uiop:merge-pathnames* (uiop:coerce-pathname "global/iolib/") *workspace-directory*))
       ;; lispbuilder has several subdirectories for each subproject
-      (extend-with (asdf::merge-pathnames* (asdf::coerce-pathname "lispbuilder/") *workspace-directory*))
-      (extend-with (asdf::merge-pathnames* (asdf::coerce-pathname "global/lispbuilder-dev/") *workspace-directory*))
+      (extend-with (uiop:merge-pathnames* (uiop:coerce-pathname "lispbuilder/") *workspace-directory*))
+      (extend-with (uiop:merge-pathnames* (uiop:coerce-pathname "global/lispbuilder-dev/") *workspace-directory*))
       (initialize-source-registry (append '(:source-registry)
                                           entries
                                           additional-entries
@@ -68,13 +69,13 @@
                    (unless (equal a b)
                      (return nil))
                    finally (return t))))
-      (dolist (candidate-directory (asdf::subdirectories root-directory))
-        (when (asdf::directory-pathname-p candidate-directory)
+      (dolist (candidate-directory (uiop:subdirectories root-directory))
+        (when (uiop:directory-pathname-p candidate-directory)
           (let ((directory-name (car (last (pathname-directory candidate-directory)))))
             ;; skip dirs starting with a _ and .
             (when (and (include-directory? directory-name)
                        (or process-outside-links
                            (not (external-symlink? candidate-directory)))
-                       (directory (asdf::merge-pathnames* "*.asd" candidate-directory)))
+                       (directory (uiop:merge-pathnames* "*.asd" candidate-directory)))
               (collect candidate-directory))))))
     result))
