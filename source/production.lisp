@@ -9,7 +9,7 @@
 #+sbcl
 (progn
   ;; (sb-ext:restrict-compiler-policy 'safety 2)
-  (pushnew :iolib-debug *features*)
+  ;; why was it here? (pushnew :iolib-debug *features*)
   ;; ALIEN-FUNCALL-SAVES-FP-AND-PC helps to get uncut backtraces even in alien calls
   #+#.(hu.dwim.asdf::if-symbol-exists "SB-C" "ALIEN-FUNCALL-SAVES-FP-AND-PC")
   (sb-ext:restrict-compiler-policy 'sb-c::alien-funcall-saves-fp-and-pc 3))
