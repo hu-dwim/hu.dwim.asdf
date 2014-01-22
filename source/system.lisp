@@ -284,6 +284,26 @@
           (funcall function dependency))))))
 
 (defun iterate-system-dependencies (function system &key (transitive nil))
+  ;; TODO maybe use ASDF:REQUIRED-COMPONENTS ?
+
+  ;; Fare: Usually, one wants to get a list of components within a system.
+  ;; Then, one typically uses required-components, e.g. like this (YMMV):
+  ;;   (asdf:required-components (asdf:find-system :fare-utils)
+  ;; :component-type '(not asdf:system) :keep-operation 'asdf:load-op
+  ;; :keep-component 'asdf:source-file)
+  ;;
+  ;; If you *really* want to walk the dependencies by yourself, use
+  ;; asdf/plan:visit-dependencies.
+  ;; There are also functions map-direct-dependencies,
+  ;; reduce-direct-dependencies, direct-dependencies that you may want to
+  ;; use instead. More often than not, it's a bad idea, though.
+  ;; Most of the time, if you need to go under the hood, it is better to manually use
+  ;;    traverse-action traverse-actions traverse-sub-actions
+  ;; with your choice of plan, e.g. a sequential-plan or filtered-sequential-plan.
+  ;;
+  ;; These are all ASDF 3 idioms. For these kinds of hacks, ASDF 2 is just
+  ;; not supported.
+
   (unless (typep system 'system)
     (setf system (find-system system)))
   (if transitive
