@@ -269,19 +269,9 @@
   (load-swank-integration-systems))
 
 (defun %iterate-system-dependencies-1 (function system)
-  (check-type system system)
-  (dolist (spec (remove-if-not (lambda (el)
-                                 (etypecase el
-                                   (operation
-                                    (typep el 'load-op))
-                                   (symbol
-                                    (eq el 'load-op))))
-                               (component-depends-on 'load-op system)
-                               :key 'first))
-    (when (> (length spec) 1)
-      (dolist (dependency (rest spec))
-        (when (typep dependency 'system)
-          (funcall function dependency))))))
+  (check-type system asdf:system)
+  (dolist (dependency (asdf:component-sideway-dependencies system))
+    (funcall function dependency)))
 
 (defun iterate-system-dependencies (function system &key (transitive nil))
   ;; TODO maybe use ASDF:REQUIRED-COMPONENTS ?
