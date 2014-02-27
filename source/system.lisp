@@ -268,17 +268,16 @@
   (find-all-swank-integration-systems)
   (load-swank-integration-systems))
 
-(defun %iterate-system-dependencies-1 (function system)
+(defun %iterate-system-dependencies-1 (function system &key (resolve t))
   (check-type system asdf:system)
   ;; NOTE: it's not clear how to iterate dependencies, see this old discussion:
   ;; http://article.gmane.org/gmane.lisp.asdf.devel/3105
   ;; although ASDF:COMPONENT-SIDEWAY-DEPENDENCIES might be newer than that discussion.
   (dolist (dependency (asdf:component-sideway-dependencies system))
-    (funcall function dependency)))
+    (funcall function (asdf:find-system dependency))))
 
-(defun iterate-system-dependencies (function system &key (transitive nil))
-  (unless (typep system 'asdf:system)
-    (setf system (find-system system)))
+(defun iterate-system-dependencies (function system &key (transitive nil) (resolve t))
+  (setf system (find-system system))
   (if transitive
       (let ((dependencies '()))
         (labels ((recurse (system)
@@ -286,28 +285,31 @@
                                                      (unless (member dependency dependencies)
                                                        (push dependency dependencies)
                                                        (recurse dependency)))
-                                                   system)))
+                                                   system
+                                                   :resolve resolve)))
           (recurse system)
           (map nil function dependencies)))
-      (%iterate-system-dependencies-1 function system))
+      (%iterate-system-dependencies-1 function system :resolve resolve))
   (values))
 
-(defun map-system-dependencies (function system &key (transitive nil))
+(defun map-system-dependencies (function system &key (transitive nil) (resolve t))
   (let ((result '()))
     (iterate-system-dependencies (lambda (dependency)
                                    (push (funcall function dependency) result))
-                                 system :transitive transitive)
+                                 system
+                                 :transitive transitive
+                                 :resolve resolve)
     result))
 
-(defun collect-system-dependencies (system &key (transitive nil))
-  (map-system-dependencies 'identity system :transitive transitive))
+(defun collect-system-dependencies (system &key (transitive nil) (resolve t))
+  (map-system-dependencies 'identity system :transitive transitive :resolve resolve))
 
-(defmacro do-system-dependencies ((variable-name system-name &key (transitive nil)) &body body)
+(defmacro do-system-dependencies ((variable-name system-name &key (transitive nil) (resolve t)) &body body)
   (let ((body-fn (gensym "DSD-BODY")))
     `(block nil
        (flet ((,body-fn (,variable-name)
                 ,@body))
-         (iterate-system-dependencies #',body-fn ,system-name :transitive ,transitive)))))
+         (iterate-system-dependencies #',body-fn ,system-name :transitive ,transitive :resolve ,resolve)))))
 
 (reinitialize-instance (change-class (find-system :hu.dwim.asdf) 'hu.dwim.system))
 
