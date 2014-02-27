@@ -7,8 +7,18 @@
 (in-package :common-lisp-user)
 
 (defpackage :hu.dwim.asdf
-  (:use :asdf
-        :common-lisp)
+  (:use :common-lisp)
+  (:import-from :asdf
+                #:find-system
+                #:initialize-source-registry
+                #:compile-op
+                #:load-op
+                #:load-system
+                #:non-propagating-operation
+                #:perform
+                #:system-relative-pathname
+                #:test-op
+                #:test-system)
   (:export #:find-and-load-swank-integration-systems
            #:hu.dwim.system
            #:hu.dwim.test-system

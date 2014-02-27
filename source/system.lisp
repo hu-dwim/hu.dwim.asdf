@@ -9,7 +9,7 @@
 ;;;;;;
 ;;; Package support
 
-(defclass system-with-package (system)
+(defclass system-with-package (asdf:system)
   ((package-name
     :initarg :package-name
     :accessor system-package-name)))
@@ -18,7 +18,7 @@
   (declare (ignore args))
   (unless (slot-boundp system 'package-name)
     (setf (system-package-name system)
-          (string-upcase (component-name system)))))
+          (string-upcase (asdf:component-name system)))))
 
 (defclass system-with-target ()
   ((target-system-name
@@ -27,7 +27,7 @@
 
 (defmethod reinitialize-instance :after ((system system-with-target) &rest args &key &allow-other-keys)
   (declare (ignore args))
-  (let* ((system-name (string-downcase (component-name system)))
+  (let* ((system-name (string-downcase (asdf:component-name system)))
          (last-dot-position (position #\. system-name :from-end t)))
     (unless (slot-boundp system 'target-system-name)
       (setf (system-target-system-name system)
@@ -36,14 +36,14 @@
       (when target-system
         (when (and (slot-boundp target-system 'asdf::author)
                    (not (slot-boundp system 'asdf::author)))
-          (setf (system-author system)
-                (system-author target-system)))
+          (setf (asdf:system-author system)
+                (asdf:system-author target-system)))
         (when (and (slot-boundp target-system 'asdf::licence)
                    (not (slot-boundp system 'asdf::licence)))
-          (setf (system-licence system)
-                (system-licence target-system)))
+          (setf (asdf:system-licence system)
+                (asdf:system-licence target-system)))
         (unless (slot-boundp system 'asdf::description)
-          (setf (system-description system)
+          (setf (asdf:system-description system)
                 (concatenate 'string
                              (string-capitalize (subseq system-name (1+ last-dot-position)))
                              " for "
@@ -54,7 +54,7 @@
 
 (defvar *muffle-optimization-warnings* t)
 
-(defclass hu.dwim.cl-source-file (cl-source-file)
+(defclass hu.dwim.cl-source-file (asdf:cl-source-file)
   ())
 
 (defclass system-with-output ()
@@ -109,10 +109,10 @@
   (declare (ignore args))
   (unless (slot-boundp system 'test-system-name)
     (setf (system-test-system-name system)
-          (concatenate 'string (string-downcase (component-name system)) ".test")))
+          (concatenate 'string (string-downcase (asdf:component-name system)) ".test")))
   (unless (slot-boundp system 'documentation-system-name)
     (setf (system-documentation-system-name system)
-          (concatenate 'string (string-downcase (component-name system)) ".documentation"))))
+          (concatenate 'string (string-downcase (asdf:component-name system)) ".documentation"))))
 
 (defmethod asdf::module-default-component-class ((class hu.dwim.test-system))
   'hu.dwim.cl-source-file)
@@ -120,7 +120,7 @@
 (defmethod asdf::module-default-component-class ((class hu.dwim.system))
   'hu.dwim.cl-source-file)
 
-(defmethod perform :around ((op operation) (component hu.dwim.cl-source-file))
+(defmethod perform :around ((op asdf:operation) (component hu.dwim.cl-source-file))
   (let ((*features* *features*)
         (*readtable* (copy-readtable *readtable*))
         (*package* *package*)
@@ -131,18 +131,18 @@
       (setf *package* hu.dwim.common-package))
     (unless hu.dwim.asdf:*load-as-production?*
       (pushnew :debug *features*))
-    (call-in-system-environment op (component-system component) #'call-next-method)))
+    (call-in-system-environment op (asdf:component-system component) #'call-next-method)))
 
 (defmethod perform :around ((op compile-op) (component hu.dwim.cl-source-file))
-  (with-capturing-output (system-compile-output (component-system component))
+  (with-capturing-output (system-compile-output (asdf:component-system component))
     (call-next-method)))
 
 (defmethod perform :around ((op load-op) (component hu.dwim.cl-source-file))
-  (with-capturing-output (system-load-output (component-system component))
+  (with-capturing-output (system-load-output (asdf:component-system component))
     (call-next-method)))
 
 (defgeneric call-in-system-environment (operation system function)
-  (:method ((op operation) (system system) function)
+  (:method ((op asdf:operation) (system asdf:system) function)
     (if *muffle-optimization-warnings*
         (call-with-muffled-boring-compiler-warnings function)
         (funcall function))))
@@ -156,7 +156,7 @@
         (warn "There is no test system for ~A, no tests were run." system))))
 
 (defgeneric run-test-suite (system)
-  (:method ((system system))
+  (:method ((system asdf:system))
     (warn "Don't know how to run tests suite for ~A" system))
   (:method :around ((system hu.dwim.test-system))
     (with-capturing-output (system-test-output system)
@@ -179,24 +179,24 @@
 (defclass develop-op (non-propagating-operation)
   ())
 
-(defmethod operation-done-p ((operation develop-op) (component component))
+(defmethod asdf:operation-done-p ((operation develop-op) (component asdf:component))
   nil)
 
-(defmethod perform ((operation develop-op) (component component))
+(defmethod perform ((operation develop-op) (component asdf:component))
   nil)
 
-(defmethod perform ((operation develop-op) (system system))
+(defmethod perform ((operation develop-op) (system asdf:system))
   (load-system system)
-  (let ((package (find-package (string-upcase (component-name system)))))
+  (let ((package (find-package (string-upcase (asdf:component-name system)))))
     (when package
       (setf *development-package* package))))
 
-(defmethod perform :before ((operation develop-op) (system system))
+(defmethod perform :before ((operation develop-op) (system asdf:system))
   (with-simple-restart (continue "Give up loading Swank and continue...")
     (load-system :swank)
     (set (read-from-string "swank:*globally-redirect-io*") t)))
 
-(defmethod perform :after ((operation develop-op) (system system))
+(defmethod perform :after ((operation develop-op) (system asdf:system))
   (load-system :hu.dwim.debug)
   (use-package :hu.dwim.debug :hu.dwim.common)
   (do-external-symbols (symbol :hu.dwim.debug)
@@ -220,7 +220,7 @@
   (declare (ignore force version))
   (let ((*development-package* nil))
     (multiple-value-prog1
-        (apply 'operate 'develop-op system :verbose verbose args)
+        (apply 'asdf:operate 'develop-op system :verbose verbose args)
       (when *development-package*
         (setf *package* *development-package*)
         (warn "Changed *package* to ~A" *package*)))))
@@ -229,7 +229,7 @@
 ;;; Util
 
 (defun system-pathname (name)
-  (component-pathname (find-system name)))
+  (asdf:component-pathname (find-system name)))
 
 (defun system-directory (name)
   (make-pathname :directory (pathname-directory (system-pathname name))))
@@ -304,7 +304,7 @@
   ;; These are all ASDF 3 idioms. For these kinds of hacks, ASDF 2 is just
   ;; not supported.
 
-  (unless (typep system 'system)
+  (unless (typep system 'asdf:system)
     (setf system (find-system system)))
   (if transitive
       (let ((dependencies '()))
