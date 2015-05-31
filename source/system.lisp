@@ -67,20 +67,27 @@
     :initarg :load-output
     :accessor system-load-output)))
 
-(defclass hu.dwim.system (system-with-output system-with-package)
+(defclass hu.dwim.base-system (system-with-output system-with-package)
+  ())
+
+(defmethod shared-initialize :around ((system hu.dwim.base-system) slot-names &rest initargs)
+  (unless (getf initargs :license)
+    (setf (getf initargs :license) "BSD or Bugroff"))
+  (unless (getf initargs :author)
+    (setf (getf initargs :author) '("Tamás Borbély <tomi.borbely@gmail.com>"
+                                    "Attila Lendvai <attila.lendvai@gmail.com>"
+                                    "Levente Mészáros <levente.meszaros@gmail.com>")))
+  (apply #'call-next-method system slot-names initargs))
+
+(defclass hu.dwim.system (hu.dwim.base-system)
   ((test-system-name
     :initarg :test-system-name
     :accessor system-test-system-name)
    (documentation-system-name
     :initarg :documentation-system-name
-    :accessor system-documentation-system-name))
-  (:default-initargs
-   :licence "BSD / Public domain"
-   :author '("Tamás Borbély <tomi.borbely@gmail.com>"
-             "Attila Lendvai <attila.lendvai@gmail.com>"
-             "Levente Mészáros <levente.meszaros@gmail.com>")))
+    :accessor system-documentation-system-name)))
 
-(defclass hu.dwim.test-system (system-with-output system-with-target system-with-package)
+(defclass hu.dwim.test-system (system-with-target hu.dwim.base-system)
   ((test-name
     :initform "TEST"
     :initarg :test-name
@@ -94,8 +101,18 @@
     :initarg :test-output
     :accessor system-test-output)))
 
-(defclass hu.dwim.documentation-system (system-with-output system-with-target system-with-package)
+(defmethod shared-initialize :around ((system hu.dwim.test-system) slot-names &rest initargs)
+  (unless (getf initargs :description)
+    (setf (getf initargs :description) "Test system for the similarly named system."))
+  (apply #'call-next-method system slot-names initargs))
+
+(defclass hu.dwim.documentation-system (system-with-target hu.dwim.base-system)
   ())
+
+(defmethod shared-initialize :around ((system hu.dwim.documentation-system) slot-names &rest initargs)
+  (unless (getf initargs :description)
+    (setf (getf initargs :description) "Documentation for the similarly named system. It should contain formally processable data and its contents should be available at http://dwim.hu"))
+  (apply #'call-next-method system slot-names initargs))
 
 (defmacro with-capturing-output (place &body forms)
   (let ((stream (gensym "STREAM")))

@@ -6,6 +6,10 @@
 
 (defsystem :hu.dwim.asdf
   :description "Various ASDF extensions such as attached test and documentation system, explicit development support, etc."
+  :author ("Tamás Borbély <tomi.borbely@gmail.com>"
+           "Attila Lendvai <attila.lendvai@gmail.com>"
+           "Levente Mészáros <levente.meszaros@gmail.com>")
+  :license "BSD or Bugroff"
   ;; this dependency on asdf may be a source of headaches if a newer asdf is part of the registry
   ;; and due to this dependency it gets updated in the middle of a half loaded image... nevertheless, we depend on asdf.
   :depends-on (:asdf
