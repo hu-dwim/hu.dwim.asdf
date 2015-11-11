@@ -271,23 +271,16 @@
                     (search "+swank" name))
            (find-system name)))))))
 
-#-quicklisp
 (defun load-swank-integration-systems ()
-  (maphash (lambda (name system-specification)
-             (let ((system (cdr system-specification)))
+  "Loads the +swank systems for the already loaded systems."
+  (map nil (lambda (name)
+             (let ((system (asdf:find-system name)))
                (when (and (search "+swank" name)
                           (not (system-loaded-p name))
                           (every 'system-loaded-p (collect-system-dependencies system)))
                  (with-simple-restart (skip-system "Skip loading swank integration ~A" system)
                    (load-system system)))))
-           asdf::*defined-systems*))
-
-#+quicklisp
-(defun load-swank-integration-systems ()
-  (mapcar (lambda (s)
-            (when (search "+swank" s)
-              (ql:quickload s)))
-          (remove-duplicates (mapcar #'ql::name (ql:system-list)) :test #'equal)))
+           (asdf:registered-systems)))
 
 (defun find-and-load-swank-integration-systems ()
   (find-all-swank-integration-systems)
