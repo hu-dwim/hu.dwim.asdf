@@ -17,6 +17,5 @@
   :components ((:module "source"
                 :components ((:file "duplicates" :depends-on ("package"))
                              (:file "package")
-                             (:file "production" :depends-on ("workspace" "duplicates"))
-                             (:file "system" :depends-on ("production"))
-                             (:file "workspace" :depends-on ("package"))))))
+                             (:file "production" :depends-on ("duplicates"))
+                             (:file "system" :depends-on ("production"))))))
