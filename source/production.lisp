@@ -6,6 +6,7 @@
 
 (in-package :hu.dwim.asdf)
 
+;; TODO changing global state is not nice from a library, it should move somewhere else
 #+sbcl
 (progn
   ;; (sb-ext:restrict-compiler-policy 'safety 2)
