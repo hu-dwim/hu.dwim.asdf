@@ -42,8 +42,6 @@
            #:production-only
            #:production-only*
            #:optimize-declaration
-           #:*workspace-directory*
-           #:initialize-asdf-source-registry
            #:iterate-system-dependencies
            #:map-asdf-source-registry-directories
            #:do-system-dependencies
