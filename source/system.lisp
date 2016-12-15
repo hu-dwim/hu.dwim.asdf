@@ -224,11 +224,15 @@
   (warn "Pushed :debug in *features* and issued (declaim (optimize (debug 3))) to help later C-c C-c'ing"))
 
 (defmethod perform ((operation develop-op) (system hu.dwim.system))
-  (let ((test-system (find-system (system-test-system-name system) nil)))
-    (if test-system
-        (load-system test-system)
-        (load-system system))
-    (let ((package (find-package (system-package-name (or test-system system)))))
+  (let ((system-to-load (or (find-system (system-test-system-name system) nil)
+                            system))
+        (quickload-fn (when (find-package '#:quicklisp)
+                        (find-symbol (string '#:quickload) (find-package '#:quicklisp)))))
+    (if quickload-fn
+        (funcall quickload-fn (asdf:component-name system-to-load)
+                 :verbose t)
+        (load-system system-to-load))
+    (let ((package (find-package (system-package-name system-to-load))))
       (when package
         (setf *development-package* package)))))
 
