@@ -146,7 +146,7 @@
       ;; when the hu.dwim.common package is available, then we read lisp files into that, so that hu.dwim.common:in-package can shadow cl:in-package.
       ;; see hu.dwim.def/source/extended-package.lisp for more info.
       (setf *package* hu.dwim.common-package))
-    (unless hu.dwim.asdf:*load-as-production?*
+    (debug-only
       (pushnew :debug *features*))
     (call-in-system-environment op (asdf:component-system component) #'call-next-method)))
 
