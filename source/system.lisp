@@ -202,12 +202,6 @@
 (defmethod perform ((operation develop-op) (component asdf:component))
   nil)
 
-(defmethod perform ((operation develop-op) (system asdf:system))
-  (load-system system)
-  (let ((package (find-package (string-upcase (asdf:component-name system)))))
-    (when package
-      (setf *development-package* package))))
-
 (defmethod perform :before ((operation develop-op) (system asdf:system))
   (with-simple-restart (continue "Give up loading Swank and continue...")
     (load-system :swank)
@@ -223,8 +217,11 @@
   (pushnew :debug *features*)
   (warn "Pushed :debug in *features* and issued (declaim (optimize (debug 3))) to help later C-c C-c'ing"))
 
-(defmethod perform ((operation develop-op) (system hu.dwim.system))
-  (let ((system-to-load (or (find-system (system-test-system-name system) nil)
+(defmethod perform ((operation develop-op) (system asdf:system))
+  (let ((system-to-load (or (find-system (if (typep system 'hu.dwim.system)
+                                             (system-test-system-name system)
+                                             (concatenate 'string (asdf:component-name system) "/test"))
+                                         nil)
                             system))
         (quickload-fn (when (find-package '#:quicklisp)
                         (find-symbol (string '#:quickload) (find-package '#:quicklisp)))))
