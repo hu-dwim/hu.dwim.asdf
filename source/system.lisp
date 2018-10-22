@@ -27,27 +27,26 @@
 
 (defmethod reinitialize-instance :after ((system system-with-target) &rest args &key &allow-other-keys)
   (declare (ignore args))
-  (let* ((system-name (string-downcase (asdf:component-name system)))
-         (last-dot-position (position #\. system-name :from-end t)))
-    (unless (slot-boundp system 'target-system-name)
-      (setf (system-target-system-name system)
-            (subseq system-name 0 last-dot-position)))
-    (let ((target-system (find-system (system-target-system-name system) nil)))
-      (when target-system
-        (when (and (slot-boundp target-system 'asdf::author)
-                   (not (slot-boundp system 'asdf::author)))
-          (setf (asdf:system-author system)
-                (asdf:system-author target-system)))
-        (when (and (slot-boundp target-system 'asdf::licence)
-                   (not (slot-boundp system 'asdf::licence)))
-          (setf (asdf:system-licence system)
-                (asdf:system-licence target-system)))
-        (unless (slot-boundp system 'asdf::description)
-          (setf (asdf:system-description system)
-                (concatenate 'string
-                             (string-capitalize (subseq system-name (1+ last-dot-position)))
-                             " for "
-                             (system-target-system-name system))))))))
+  (flet ((maybe-copy-slot (slot-name source target)
+           (when (and (slot-boundp source slot-name)
+                      (not (slot-boundp target slot-name)))
+             (setf (slot-value target slot-name)
+                   (slot-value source slot-name)))))
+    (let* ((system-name (string-downcase (asdf:component-name system)))
+           (last-dot-position (position #\. system-name :from-end t)))
+      (unless (slot-boundp system 'target-system-name)
+        (setf (system-target-system-name system)
+              (subseq system-name 0 last-dot-position)))
+      (let ((target-system (find-system (system-target-system-name system) nil)))
+        (when target-system
+          (maybe-copy-slot 'asdf::author target-system system)
+          (maybe-copy-slot 'asdf::licence target-system system)
+          (unless (slot-boundp system 'asdf::description)
+            (setf (slot-value system 'asdf::description)
+                  (concatenate 'string
+                               (string-capitalize (subseq system-name (1+ last-dot-position)))
+                               " for "
+                               (system-target-system-name system)))))))))
 
 ;;;;;;
 ;;; DWIM system
