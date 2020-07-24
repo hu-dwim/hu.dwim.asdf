@@ -228,9 +228,10 @@
         (funcall quickload-fn (asdf:component-name system-to-load)
                  :verbose t)
         (load-system system-to-load))
-    (let ((package (find-package (system-package-name system-to-load))))
-      (when package
-        (setf *development-package* package)))))
+    (when (typep system-to-load 'system-with-package)
+      (let ((package (find-package (system-package-name system-to-load))))
+        (when package
+          (setf *development-package* package))))))
 
 (defun develop-system (system &rest args &key force (verbose t) version)
   "Shorthand for `(operate 'asdf:develop-op system)`. See [operate][] for details."
