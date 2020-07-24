@@ -125,10 +125,10 @@
   (declare (ignore args))
   (unless (slot-boundp system 'test-system-name)
     (setf (system-test-system-name system)
-          (concatenate 'string (string-downcase (asdf:component-name system)) ".test")))
+          (concatenate 'string (string-downcase (asdf:component-name system)) "/test")))
   (unless (slot-boundp system 'documentation-system-name)
     (setf (system-documentation-system-name system)
-          (concatenate 'string (string-downcase (asdf:component-name system)) ".documentation"))))
+          (concatenate 'string (string-downcase (asdf:component-name system)) "/documentation"))))
 
 (defmethod asdf::module-default-component-class ((class hu.dwim.test-system))
   'hu.dwim.cl-source-file)
