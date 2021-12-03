@@ -262,29 +262,21 @@
     :for asd-file :being :the :hash-value :of asdf::*source-registry*
     :do (funcall visitor (make-pathname :directory (pathname-directory asd-file)))))
 
-(defun find-all-swank-integration-systems ()
+(defun find-and-load-swank-integration-systems ()
   (map-asdf-source-registry-directories
    (lambda (directory)
      (dolist (file (directory (merge-pathnames directory (make-pathname :name :wild :type "asd"))))
        (let ((name (pathname-name file)))
          (when (and (search "hu.dwim" name)
                     (search "+swank" name))
-           (find-system name)))))))
-
-(defun load-swank-integration-systems ()
-  "Loads the +swank systems for the already loaded systems."
-  (map nil (lambda (name)
-             (let ((system (asdf:find-system name)))
-               (when (and (search "+swank" name)
-                          (not (system-loaded-p name))
-                          (every 'system-loaded-p (collect-system-dependencies system)))
-                 (with-simple-restart (skip-system "Skip loading swank integration ~A" system)
-                   (load-system system)))))
-           (asdf:registered-systems)))
-
-(defun find-and-load-swank-integration-systems ()
-  (find-all-swank-integration-systems)
-  (load-swank-integration-systems))
+           ;; this only forces the loading of the asdf system from the .asd file
+           (let ((system (find-system name)))
+             (when (and system
+                        (not (system-loaded-p name))
+                        (every 'system-loaded-p (collect-system-dependencies system)))
+               (with-simple-restart (skip-system "Skip loading swank integration ~A" system)
+                 (format t "; Loading Swank integration system ~A~%" system)
+                 (load-system system))))))))))
 
 (defun %iterate-system-dependencies-1 (function system)
   (check-type system asdf:system)
