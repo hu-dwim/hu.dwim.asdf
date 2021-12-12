@@ -67,7 +67,11 @@
     :accessor system-load-output)))
 
 (defclass hu.dwim.base-system (system-with-output system-with-package)
-  ())
+  ;; override the slot's initform. adding a :default-initargs has no
+  ;; effect, because the slot has an :initform on the base class.
+  ;; for details see https://mailman.common-lisp.net/pipermail/asdf-devel/2021-December/006668.html
+  ;; and https://lisptips.com/post/11728375873/initform-and-default-initargs
+  ((asdf/component:default-component-class :initform 'hu.dwim.cl-source-file)))
 
 (defmethod shared-initialize :around ((system hu.dwim.base-system) slot-names &rest initargs)
   (unless (getf initargs :license)
@@ -129,12 +133,6 @@
   (unless (slot-boundp system 'documentation-system-name)
     (setf (system-documentation-system-name system)
           (concatenate 'string (string-downcase (asdf:component-name system)) "/documentation"))))
-
-(defmethod asdf::module-default-component-class ((class hu.dwim.test-system))
-  'hu.dwim.cl-source-file)
-
-(defmethod asdf::module-default-component-class ((class hu.dwim.system))
-  'hu.dwim.cl-source-file)
 
 (defmethod perform :around ((op asdf:operation) (component hu.dwim.cl-source-file))
   (let ((*features* *features*)
