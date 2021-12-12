@@ -161,17 +161,22 @@
         (call-with-muffled-boring-compiler-warnings function)
         (funcall function))))
 
+(defmethod asdf:component-depends-on ((op test-op) (system hu.dwim.system))
+  (let ((test-system (find-system (system-test-system-name system) nil)))
+    (append (when (typep test-system 'hu.dwim.test-system)
+              `((load-op ,test-system)))
+            (call-next-method))))
+
 (defmethod perform ((op test-op) (system hu.dwim.system))
   (let ((test-system (find-system (system-test-system-name system) nil)))
-    (if (typep test-system 'hu.dwim.test-system)
-        (progn
-          (load-system test-system)
-          (run-test-suite test-system))
-        (warn "There is no test system for ~A, no tests were run." system))))
+    (if test-system
+        (run-test-suite test-system)
+        (warn "No tests were run; system: ~A, its test-system: ~A."
+              system (system-test-system-name system)))))
 
 (defgeneric run-test-suite (system)
   (:method ((system asdf:system))
-    (warn "Don't know how to run tests suite for ~A" system))
+    (warn "Don't know how to run test suite for ~A" system))
   (:method :around ((system hu.dwim.test-system))
     (with-capturing-output (system-test-output system)
       (setf (system-test-result system) (call-next-method))))
@@ -180,6 +185,7 @@
         (let ((package-name (system-package-name system)))
           (if package-name
               (let ((test-name (find-symbol (system-test-name system) package-name)))
+                (format t "; RUN-TEST-SUITE is about to call ~S~%" test-name)
                 (funcall (find-symbol "FUNCALL-TEST-WITH-FEEDBACK-MESSAGE" :hu.dwim.stefil) test-name))
               (warn "There is no test package for ~A, no tests were run." system)))
         (call-next-method))))
@@ -193,26 +199,16 @@
 (defclass develop-op (non-propagating-operation)
   ())
 
-(defmethod asdf:operation-done-p ((operation develop-op) (component asdf:component))
+(defmethod asdf:operation-done-p ((op develop-op) (c asdf:component))
   nil)
+
+(defmethod asdf:component-depends-on ((op develop-op) (system asdf:system))
+  `((load-op ,(find-system :swank))
+    (load-op ,(find-system :hu.dwim.debug))
+    ,@(call-next-method)))
 
 (defmethod perform ((operation develop-op) (component asdf:component))
   nil)
-
-(defmethod perform :before ((operation develop-op) (system asdf:system))
-  (with-simple-restart (continue "Give up loading Swank and continue...")
-    (load-system :swank)
-    (set (read-from-string "swank:*globally-redirect-io*") t)))
-
-(defmethod perform :after ((operation develop-op) (system asdf:system))
-  (load-system :hu.dwim.debug)
-  (use-package :hu.dwim.debug :hu.dwim.common)
-  (do-external-symbols (symbol :hu.dwim.debug)
-    (export symbol :hu.dwim.common))
-  (find-and-load-swank-integration-systems)
-  (declaim (optimize (debug 3)))
-  (pushnew :debug *features*)
-  (warn "Pushed :debug in *features* and issued (declaim (optimize (debug 3))) to help later C-c C-c'ing"))
 
 (defmethod perform ((operation develop-op) (system asdf:system))
   (let ((system-to-load (or (find-system (if (typep system 'hu.dwim.system)
@@ -228,15 +224,31 @@
         (load-system system-to-load))
     (when (typep system-to-load 'system-with-package)
       (let ((package (find-package (system-package-name system-to-load))))
-        (when package
+        (when (and package
+                   (boundp '*development-package*))
           (setf *development-package* package))))))
 
 (defun develop-system (system &rest args &key force (verbose t) version)
   "Shorthand for `(operate 'asdf:develop-op system)`. See [operate][] for details."
   (declare (ignore force version))
+  (setf (symbol-value (read-from-string "swank:*globally-redirect-io*"))
+        t)
   (let ((*development-package* nil))
     (multiple-value-prog1
         (apply 'asdf:operate 'develop-op system :verbose verbose args)
+      #+nil
+      (progn
+        ;; This used to be part of perform develop-op, but i don't
+        ;; know why, therefore i added it here in a commented out
+        ;; block in a refactor.
+        (asdf:load-system :hu.dwim.debug)
+        (use-package :hu.dwim.debug :hu.dwim.common)
+        (do-external-symbols (symbol :hu.dwim.debug)
+          (export symbol :hu.dwim.common)))
+      (declaim (optimize (debug 3)))
+      (pushnew :debug *features*)
+      (warn "Pushed :debug in *features* and issued (declaim (optimize (debug 3))) to help later C-c C-c'ing")
+      (find-and-load-swank-integration-systems)
       (when *development-package*
         (setf *package* *development-package*)
         (warn "Changed *package* to ~A" *package*)))))
