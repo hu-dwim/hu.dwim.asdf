@@ -54,7 +54,9 @@
 (defvar *muffle-optimization-warnings* t)
 
 (defclass hu.dwim.cl-source-file (asdf:cl-source-file)
-  ())
+  ()
+  (:default-initargs
+   :around-compile 'around-compile/hu.dwim.cl-source-file))
 
 (defclass system-with-output (asdf:system)
   ((compile-output
@@ -133,7 +135,8 @@
     (setf (system-documentation-system-name system)
           (concatenate 'string (string-downcase (asdf:component-name system)) "/documentation"))))
 
-(defmethod perform :around ((op asdf:operation) (component hu.dwim.cl-source-file))
+(defun around-compile/hu.dwim.cl-source-file (function)
+  "It's the default around-compile hook of hu.dwim.cl-source-file components."
   (let ((*features* *features*)
         (*readtable* (copy-readtable *readtable*))
         (*package* *package*)
