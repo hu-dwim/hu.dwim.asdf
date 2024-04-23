@@ -20,7 +20,7 @@
     (setf (system-package-name system)
           (string-upcase (asdf:component-name system)))))
 
-(defclass system-with-target ()
+(defclass system-with-target (asdf:system)
   ((target-system-name
     :initarg :target-system-name
     :accessor system-target-system-name)))
@@ -56,7 +56,7 @@
 (defclass hu.dwim.cl-source-file (asdf:cl-source-file)
   ())
 
-(defclass system-with-output ()
+(defclass system-with-output (asdf:system)
   ((compile-output
     :initform nil
     :initarg :compile-output
@@ -102,12 +102,9 @@
    (test-output
     :initform nil
     :initarg :test-output
-    :accessor system-test-output)))
-
-(defmethod shared-initialize :around ((system hu.dwim.test-system) slot-names &rest initargs)
-  (unless (getf initargs :description)
-    (setf (getf initargs :description) "Test system for the similarly named system."))
-  (apply #'call-next-method system slot-names initargs))
+    :accessor system-test-output))
+  (:default-initargs
+   :description "Test system for the similarly named system."))
 
 (defclass hu.dwim.documentation-system (system-with-target hu.dwim.base-system)
   ())
