@@ -119,8 +119,10 @@
     `(let* ((,stream (make-string-output-stream))
             (*standard-output* (make-broadcast-stream *standard-output* ,stream))
             (*error-output* (make-broadcast-stream *error-output* ,stream)))
-       ,@forms
-       (setf ,place (concatenate 'string ,place (get-output-stream-string ,stream))))))
+       (multiple-value-prog1
+           (progn
+             ,@forms)
+         (setf ,place (concatenate 'string ,place (get-output-stream-string ,stream)))))))
 
 (defmethod reinitialize-instance :after ((system hu.dwim.system) &rest args &key &allow-other-keys)
   (declare (ignore args))
