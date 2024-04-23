@@ -144,7 +144,9 @@
       (setf *package* hu.dwim.common-package))
     (debug-only
       (pushnew :debug *features*))
-    (call-in-system-environment op (asdf:component-system component) #'call-next-method)))
+    (if *muffle-optimization-warnings*
+        (call-with-muffled-boring-compiler-warnings function)
+        (funcall function))))
 
 (defmethod perform :around ((op compile-op) (component hu.dwim.cl-source-file))
   (with-capturing-output (system-compile-output (asdf:component-system component))
@@ -153,12 +155,6 @@
 (defmethod perform :around ((op load-op) (component hu.dwim.cl-source-file))
   (with-capturing-output (system-load-output (asdf:component-system component))
     (call-next-method)))
-
-(defgeneric call-in-system-environment (operation system function)
-  (:method ((op asdf:operation) (system asdf:system) function)
-    (if *muffle-optimization-warnings*
-        (call-with-muffled-boring-compiler-warnings function)
-        (funcall function))))
 
 (defmethod asdf:component-depends-on ((op test-op) (system hu.dwim.system))
   (let ((test-system (find-system (system-test-system-name system) nil)))
