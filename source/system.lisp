@@ -151,6 +151,9 @@
         (call-with-muffled-boring-compiler-warnings function)
         (funcall function))))
 
+(defmethod perform :around ((op asdf:operation) (component hu.dwim.cl-source-file))
+  (call-in-asdf-op-env #'call-next-method))
+
 (defmethod perform :around ((op compile-op) (component hu.dwim.cl-source-file))
   (with-capturing-output (system-compile-output (asdf:component-system component))
     (call-next-method)))
