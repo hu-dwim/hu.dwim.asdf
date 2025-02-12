@@ -56,7 +56,7 @@
 (defclass hu.dwim.cl-source-file (asdf:cl-source-file)
   ()
   (:default-initargs
-   :around-compile 'around-compile/hu.dwim.cl-source-file))
+   :around-compile 'call-in-asdf-op-env))
 
 (defclass system-with-output (asdf:system)
   ((compile-output
@@ -135,7 +135,7 @@
     (setf (system-documentation-system-name system)
           (concatenate 'string (string-downcase (asdf:component-name system)) "/documentation"))))
 
-(defun around-compile/hu.dwim.cl-source-file (function)
+(defun call-in-asdf-op-env (function)
   "It's the default around-compile hook of hu.dwim.cl-source-file components."
   (let ((*features* *features*)
         (*readtable* (copy-readtable *readtable*))
